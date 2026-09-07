@@ -292,7 +292,7 @@
 
                     <div class="mt-3">
                         <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
-                            <input type="checkbox" id="auto-supplement-checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <input type="checkbox" id="auto-supplement-checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             <span>Suppler automatisk med standardlængder (2,4 - 5,4m), hvis eget lager slipper op</span>
                         </label>
                     </div>
@@ -644,7 +644,7 @@
             }
 
             const globalMargin = parseInt(safetyMarginInput.value) || 0;
-            const autoSupplement = autoSupplementCheckbox ? autoSupplementCheckbox.checked : true;
+            const autoSupplement = autoSupplementCheckbox ? autoSupplementCheckbox.checked : false;
 
             try {
                 const result = runOptimization(globalMargin, stockLengths, requiredPieces, autoSupplement);
@@ -659,7 +659,7 @@
         }
 
         // --- OPTIMERINGS-MOTOR (ROBUST BIN-PACKING) ---
-        function runOptimization(globalMargin, currentStock, piecesToProcess, autoSupplement = true) {
+        function runOptimization(globalMargin, currentStock, piecesToProcess, autoSupplement = false) {
             // Grupper emner pr. normaliseret dimension
             const piecesByDim = {};
             piecesToProcess.forEach(p => {
@@ -739,8 +739,12 @@
 
                     // 3. Hvis stadig ikke placeret: suppler med standard handelslængde (2,4 - 5,4 m)
                     if (!placed) {
-                        if (!autoSupplement && hasUserStock) {
-                            throw new Error(`Eget lager af dimension ${dim} er opbrugt! Mangler bræt til emne '${piece.tag}' (${piece.exactLength} mm + ${piece.margin} mm ekstra). Tilføj flere brædder på lager, eller slå automatisk supplering til.`);
+                        if (!autoSupplement && (hasUserStock || (currentStock && currentStock.length > 0))) {
+                            if (hasUserStock) {
+                                throw new Error(`Eget lager af dimension ${dim} er opbrugt! Mangler bræt til emne '${piece.tag}' (${piece.exactLength} mm + ${piece.margin} mm ekstra). Tilføj flere brædder på lager, eller slå 'Suppler automatisk med standardlængder' til.`);
+                            } else {
+                                throw new Error(`Der er ikke tilføjet noget lager for dimension ${dim} i sektion 3. Tilføj lager til denne dimension, eller slå 'Suppler automatisk med standardlængder' til.`);
+                            }
                         }
 
                         const suitableLengths = STANDARD_LENGTHS.filter(l => l >= piece.cutLength);
