@@ -272,20 +272,20 @@
                         Hvis du <strong>ikke</strong> tilføjer lager her, beregner appen automatisk det mest optimale indkøb af standard handelslængder (2,4 – 5,4 m).
                     </p>
 
-                    <form id="add-stock-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <div class="sm:col-span-2">
+                    <form id="add-stock-form" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div class="sm:col-span-5">
                             <label for="stock-dimension-select" class="block text-xs font-medium text-gray-600 mb-1">Dimension</label>
                             <select id="stock-dimension-select" name="dimension" class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"></select>
                         </div>
-                        <div>
+                        <div class="sm:col-span-4">
                             <label for="stock-length-select" class="block text-xs font-medium text-gray-600 mb-1">Længde</label>
                             <select id="stock-length-select" name="length" required class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"></select>
                         </div>
-                        <div>
+                        <div class="sm:col-span-3">
                             <label for="stock-amount" class="block text-xs font-medium text-gray-600 mb-1">Antal</label>
                             <input type="number" id="stock-amount" name="amount" value="1" min="1" required class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border">
                         </div>
-                        <div class="sm:col-span-4">
+                        <div class="sm:col-span-12">
                             <button type="submit" class="w-full rounded-md bg-indigo-600 py-2 px-4 text-sm font-semibold text-white shadow hover:bg-indigo-700 transition">Tilføj til Lager</button>
                         </div>
                     </form>
@@ -1179,7 +1179,7 @@
         function populateStandardLengthsDropdown() {
             let html = '';
             for (let l = 2400; l <= 5400; l += 300) {
-                html += `<option value="${l}">${l} mm (${(l/1000).toFixed(1)} m)</option>`;
+                html += `<option value="${l}">${l} mm</option>`;
             }
             stockLengthSelect.innerHTML = html;
         }
