@@ -138,15 +138,12 @@
             .print-hide { display: none !important; }
             .print-container { display: block !important; width: 100% !important; max-width: 100% !important; box-shadow: none; border: none;}
             #results-container { box-shadow: none !important; border: none !important; padding: 0 !important; min-height: 0 !important; }
+            #sustainability-report { box-shadow: none !important; border: 1px solid #999 !important; padding: 1rem !important; margin-top: 1.5rem !important; page-break-inside: avoid; }
+            #sustainability-report.hidden { display: none !important; }
             
             #print-header {
                 display: block !important;
                 text-align: center;
-                font-size: 1.5rem;
-                font-weight: bold;
-                padding-bottom: 1rem;
-                margin-bottom: 1rem;
-                border-bottom: 2px solid #000;
                 width: 100%;
             }
 
@@ -340,8 +337,11 @@
                 </div>
 
                 <!-- Resultat-visning -->
+                <!-- Print Header (vises kun ved udskrift) -->
+                <div id="print-header" class="hidden"></div>
+
+                <!-- Resultat-visning -->
                 <div id="results-container" class="panel min-h-[300px]">
-                    <div id="print-header" class="hidden"></div>
                     <div id="results-placeholder" class="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -352,7 +352,7 @@
                 </div>
 
                 <!-- Indkøbs- & Bæredygtighedsrapport -->
-                <div id="sustainability-report" class="panel hidden print-hide"></div>
+                <div id="sustainability-report" class="panel hidden"></div>
             </div>
         </div>
     </div>
@@ -444,7 +444,7 @@
         });
 
         // Opdater versionsdato automatisk
-        document.getElementById('version-info').innerHTML = "Version 3.9.2 &bull; Sidst opdateret: " + document.lastModified;
+        document.getElementById('version-info').innerHTML = "Version 3.9.3 &bull; Sidst opdateret: " + document.lastModified;
 
         // --- LIVE BEREGNINGSTRIGGER ---
         function triggerAutoCalculate() {
@@ -452,7 +452,6 @@
                 handleCalculate();
             } else {
                 resultsContainer.innerHTML = `
-                    <div id="print-header" class="hidden"></div>
                     <div id="results-placeholder" class="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -645,7 +644,7 @@
 
         // --- BEREGNINGSFUNKTION ---
         function handleCalculate() {
-            resultsContainer.innerHTML = '<div id="print-header" class="hidden"></div>';
+            resultsContainer.innerHTML = '';
             if (requiredPieces.length === 0) {
                 renderError('Tilføj mindst ét ønsket emne i sektion 2.');
                 sustainabilityReportContainer.classList.add('hidden');
@@ -1073,10 +1072,41 @@
         }
 
         function handlePrint() {
-            const printHeader = document.getElementById('print-header');
-            const pName = printProjectNameInput.value.trim() || 'Træoptimerings-Projekt';
-            printHeader.innerText = pName;
-            window.print();
+            try {
+                let printHeader = document.getElementById('print-header');
+                const pName = (printProjectNameInput && printProjectNameInput.value.trim()) || 
+                              (projectNameInput && projectNameInput.value.trim()) || 
+                              'Træoptimerings-Projekt';
+                if (!printHeader) {
+                    printHeader = document.createElement('div');
+                    printHeader.id = 'print-header';
+                    const container = document.getElementById('results-container');
+                    if (container && container.parentNode) {
+                        container.parentNode.insertBefore(printHeader, container);
+                    } else {
+                        document.body.appendChild(printHeader);
+                    }
+                }
+                const now = new Date().toLocaleDateString('da-DK', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+                printHeader.innerHTML = `
+                    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 16px;">
+                        <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 4px 0;">${pName}</h1>
+                        <p style="font-size: 13px; color: #555; margin: 0;">Skæreplan & Materialeliste &bull; Udskrevet: ${now}</p>
+                    </div>
+                `;
+            } catch (err) {
+                console.warn('Fejl ved print-header:', err);
+            }
+
+            try {
+                window.focus();
+                window.print();
+            } catch (err) {
+                console.error('Print fejl:', err);
+                alert('Kunne ikke åbne printerdialogen automatisk.');
+            }
         }
 
         function handleSaveProject() {
