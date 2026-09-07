@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Træoptimerings-App v3.9.8</title>
+    <title>Træoptimerings-App v3.9.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,7 +163,7 @@
 
     <div class="max-w-7xl mx-auto print-container">
         <header class="text-center mb-6 print-hide">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.8</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.9</h1>
             <p class="text-gray-600 mt-1 text-sm md:text-base">Mængdeberegning, Deling, Udskrift & Bæredygtighedsanalyse</p>
             <div class="flex items-center justify-center gap-3 mt-2 flex-wrap">
                 <span id="version-info" class="text-xs text-gray-400"></span>
@@ -175,7 +175,7 @@
                 <span class="text-gray-300">&bull;</span>
                 <button id="force-reload-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition shadow-sm" title="Tvinger browseren til at hente den nyeste version og rydde eventuel gammel browser-cache">
                     <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Opdater app (v3.9.8)</span>
+                    <span>Opdater app (v3.9.9)</span>
                 </button>
             </div>
         </header>
@@ -492,7 +492,7 @@
                         </div>
                         <span id="preview-capacity-note" class="text-[10px] text-gray-500 font-medium">Reelt udskriftsformat</span>
                     </div>
-                    <div id="print-preview-viewport" class="flex-1 bg-gray-200/90 p-2 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-auto max-h-[520px] flex justify-center items-start shadow-inner custom-scrollbar">
+                    <div id="print-preview-viewport" class="flex-1 bg-gray-200/90 p-2 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-auto max-h-[520px] shadow-inner custom-scrollbar block text-left">
                         <div id="print-preview-sheet" class="bg-white shadow-2xl p-4 sm:p-6 md:p-7 rounded text-gray-900 border border-gray-300 text-xs transition-all duration-200">
                             <!-- Indhold udfyldes dynamisk af JS -->
                         </div>
@@ -685,7 +685,7 @@
         });
 
         // Opdater versionsdato automatisk
-        document.getElementById('version-info').innerHTML = "Version 3.9.8 &bull; Sidst opdateret: " + document.lastModified;
+        document.getElementById('version-info').innerHTML = "Version 3.9.9 &bull; Sidst opdateret: " + document.lastModified;
 
         // --- LIVE BEREGNINGSTRIGGER ---
         function triggerAutoCalculate() {
@@ -1608,7 +1608,7 @@
             }
         }
 
-        function buildPrintContentHTML(res, options) {
+        function buildPrintContentHTML(res, options = {}) {
             if (!res || !res.plan) return '<p style="color:#6b7280; font-style:italic;">Ingen optimeringsresultater tilgængelige.</p>';
             const {
                 incHeader = true,
@@ -1624,7 +1624,22 @@
                 orientation = 'portrait'
             } = options;
 
-            const barH = scale < 75 ? '34px' : (scale < 85 ? '42px' : '52px');
+            const isA3 = size === 'A3';
+            // Skaleringsfaktor for indholdet (mellem 0.55 og 1.0)
+            const sFactor = Math.max(0.55, Math.min(1.0, (scale / 100) * (isA3 ? 0.90 : 1.0)));
+
+            // Proportionale størrelser baseret på indholdsskalering
+            const barH = Math.max(24, Math.round(50 * sFactor)) + 'px';
+            const mbSection = Math.max(5, Math.round(12 * sFactor)) + 'px';
+            const mbItem = Math.max(3, Math.round(8 * sFactor)) + 'px';
+            const padBox = `${Math.max(4, Math.round(8 * sFactor))}px ${Math.max(6, Math.round(12 * sFactor))}px`;
+            const titleFs = Math.max(13, Math.round(19 * sFactor)) + 'px';
+            const h2Fs = Math.max(10, Math.round(12 * sFactor)) + 'px';
+            const bodyFs = Math.max(8.5, Math.round(11 * sFactor)) + 'px';
+            const smallFs = Math.max(7.5, Math.round(9.5 * sFactor)) + 'px';
+            const miniFs = Math.max(6.8, Math.round(8.5 * sFactor)) + 'px';
+            const tdPad = `${Math.max(2, Math.round(4 * sFactor))}px ${Math.max(3, Math.round(6 * sFactor))}px`;
+
             const dateStr = new Date().toLocaleDateString('da-DK', {
                 year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             });
@@ -1634,15 +1649,15 @@
             // 1. Sideoverskrift
             if (incHeader) {
                 html += `
-                    <div style="border-bottom: 2px solid #111827; padding-bottom: 8px; margin-bottom: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 8px;">
-                            <div>
-                                <h1 style="font-size: 20px; font-weight: bold; margin: 0; color: #111827;">${projectName}</h1>
-                                ${notes ? `<p style="font-size: 11px; color: #4b5563; margin: 3px 0 0 0;"><strong>Note / Elev:</strong> ${notes}</p>` : ''}
+                    <div style="border-bottom: 2px solid #111827; padding-bottom: ${Math.max(3, Math.round(6 * sFactor))}px; margin-bottom: ${mbSection};">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 6px;">
+                            <div style="min-width: 0; flex: 1;">
+                                <h1 style="font-size: ${titleFs}; font-weight: bold; margin: 0; color: #111827; line-height: 1.2; word-break: break-word;">${projectName}</h1>
+                                ${notes ? `<p style="font-size: ${bodyFs}; color: #4b5563; margin: 2px 0 0 0;"><strong>Note / Elev:</strong> ${notes}</p>` : ''}
                             </div>
-                            <div style="text-align: right; font-size: 10px; color: #4b5563;">
+                            <div style="text-align: right; font-size: ${smallFs}; color: #4b5563; flex-shrink: 0;">
                                 <div><strong>Udskrevet:</strong> ${dateStr}</div>
-                                <div style="font-size: 9px; color: #9ca3af; margin-top: 4px;">Træoptimerings-App v3.9.8</div>
+                                <div style="font-size: ${miniFs}; color: #9ca3af; margin-top: 2px;">Træoptimerings-App v3.9.9</div>
                             </div>
                         </div>
                     </div>
@@ -1652,25 +1667,25 @@
             // 2. Samlet Forbrugsoversigt
             if (incSummary) {
                 html += `
-                    <div class="print-avoid-break" style="margin-bottom: 12px; padding: 10px 14px; background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 6px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 6px;">
-                            <strong style="font-size: 12px; color: #111827;">Samlet Forbrugsoversigt</strong>
-                            <span style="font-size: 11px; color: #4b5563;">${(res.totalRequiredLength/1000).toFixed(2)} m emner (inkl. tillæg)</span>
+                    <div class="print-avoid-break" style="margin-bottom: ${mbSection}; padding: ${padBox}; background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; margin-bottom: 5px;">
+                            <strong style="font-size: ${h2Fs}; color: #111827;">Samlet Forbrugsoversigt</strong>
+                            <span style="font-size: ${bodyFs}; color: #4b5563;">${(res.totalRequiredLength/1000).toFixed(2)} m emner (inkl. tillæg)</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 11px;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: ${bodyFs};">
                             <div>
-                                <span style="color: #6b7280; display: block; font-size: 10px;">Samlet anvendt træ:</span>
-                                <strong style="font-size: 13px; color: #111827;">${(res.totalUsedStockLength/1000).toFixed(2)} m</strong>
+                                <span style="color: #6b7280; display: block; font-size: ${smallFs};">Samlet anvendt træ:</span>
+                                <strong style="font-size: ${h2Fs}; color: #111827;">${(res.totalUsedStockLength/1000).toFixed(2)} m</strong>
                             </div>
                             <div>
-                                <span style="color: #6b7280; display: block; font-size: 10px;">Samlet spild:</span>
-                                <strong style="font-size: 13px; color: ${res.wastePercentage > 15 ? '#b45309' : '#15803d'};">
+                                <span style="color: #6b7280; display: block; font-size: ${smallFs};">Samlet spild:</span>
+                                <strong style="font-size: ${h2Fs}; color: ${res.wastePercentage > 15 ? '#b45309' : '#15803d'};">
                                     ${(res.totalWaste/1000).toFixed(2)} m (${res.wastePercentage.toFixed(1)}%)
                                 </strong>
                             </div>
                             <div>
-                                <span style="color: #6b7280; display: block; font-size: 10px;">Udnyttelsesgrad:</span>
-                                <strong style="font-size: 13px; color: #15803d;">${(100 - res.wastePercentage).toFixed(1)}%</strong>
+                                <span style="color: #6b7280; display: block; font-size: ${smallFs};">Udnyttelsesgrad:</span>
+                                <strong style="font-size: ${h2Fs}; color: #15803d;">${(100 - res.wastePercentage).toFixed(1)}%</strong>
                             </div>
                         </div>
                     </div>
@@ -1679,7 +1694,7 @@
 
             // 3. Visuel Skæreplan (med print-avoid-break)
             if (incPlan) {
-                html += `<div style="margin-bottom: 12px;">`;
+                html += `<div style="margin-bottom: ${mbSection};">`;
 
                 let modeBannerText = 'RÅMÅL (Mål inkl. tillæg til afkortersav)';
                 let modeBannerBg = '#fef3c7';
@@ -1698,9 +1713,9 @@
                 }
 
                 html += `
-                    <div class="print-avoid-break" style="margin-bottom: 8px; padding: 5px 8px; background-color: ${modeBannerBg}; border: 1.5px solid ${modeBannerBorder}; border-radius: 4px; font-size: 10px; font-weight: bold; color: ${modeBannerColor}; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="print-avoid-break" style="margin-bottom: ${mbItem}; padding: ${Math.max(3, Math.round(4 * sFactor))}px 8px; background-color: ${modeBannerBg}; border: 1.5px solid ${modeBannerBorder}; border-radius: 4px; font-size: ${smallFs}; font-weight: bold; color: ${modeBannerColor}; display: flex; justify-content: space-between; align-items: center;">
                         <span>MÅLVISNING PÅ SKÆREPLAN: ${modeBannerText}</span>
-                        <span style="font-size: 9px; font-weight: normal; opacity: 0.85;">(Afkortningstillæg: ${safetyMarginInput ? safetyMarginInput.value : 50} mm)</span>
+                        <span style="font-size: ${miniFs}; font-weight: normal; opacity: 0.85;">(Afkortningstillæg: ${safetyMarginInput ? safetyMarginInput.value : 50} mm)</span>
                     </div>
                 `;
 
@@ -1712,10 +1727,10 @@
                     dimPlan.forEach(s => { totalPieces += s.pieces.length; });
 
                     html += `
-                        <div class="print-avoid-break" style="margin-bottom: 10px; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #f3f4f6; padding-bottom: 3px;">
-                                <span style="font-size: 12px; font-weight: bold; color: #111827;">${dim}</span>
-                                <span style="font-size: 10px; color: #3730a3; background: #eef2ff; padding: 1px 6px; border-radius: 4px; font-weight: 600;">
+                        <div class="print-avoid-break" style="margin-bottom: ${mbItem}; padding: ${padBox}; border: 1px solid #e5e7eb; border-radius: 5px; background: #fff;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #f3f4f6; padding-bottom: 2px;">
+                                <span style="font-size: ${h2Fs}; font-weight: bold; color: #111827;">${dim}</span>
+                                <span style="font-size: ${smallFs}; color: #3730a3; background: #eef2ff; padding: 1px 5px; border-radius: 3px; font-weight: 600;">
                                     ${totalPieces} emner &bull; ${dimPlan.length} brædder
                                 </span>
                             </div>
@@ -1723,8 +1738,8 @@
 
                     dimPlan.forEach((stock, i) => {
                         html += `
-                            <div class="print-avoid-break" style="margin-top: 6px;">
-                                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #4b5563; margin-bottom: 2px;">
+                            <div class="print-avoid-break" style="margin-top: ${Math.max(3, Math.round(5 * sFactor))}px;">
+                                <div style="display: flex; justify-content: space-between; font-size: ${smallFs}; color: #4b5563; margin-bottom: 2px;">
                                     <span><strong>Bræt #${i+1}</strong> (${stock.originalLength} mm) ${stock.isStock ? '<span style="color:#1d4ed8; font-weight:600;">[Eget lager]</span>' : '<span style="color:#047857; font-weight:600;">[Handelslængde]</span>'}</span>
                                     <span>Restspild: <strong>${stock.waste} mm</strong></span>
                                 </div>
@@ -1737,27 +1752,27 @@
                             const margW = (p.margin / p.cutLength) * 100;
                             const color = pieceColors[p.id % pieceColors.length];
 
-                            let printPieceMeasureHTML = `<span style="font-family: monospace; font-size: 8.5px; color: #111;">${p.exactLength}mm</span>`;
+                            let printPieceMeasureHTML = `<span style="font-family: monospace; font-size: ${miniFs}; color: #111;">${p.exactLength}mm</span>`;
                             if (displayMode === 'gross') {
                                 printPieceMeasureHTML = `
-                                    <span style="font-family: monospace; font-size: 9px; font-weight: bold; color: #92400e; background: #fef3c7; padding: 0 2px; border-radius: 2px;">${p.cutLength}mm RÅ</span>
-                                    <span style="font-size: 7.5px; color: #4b5563;">(netto: ${p.exactLength})</span>
+                                    <span style="font-family: monospace; font-size: ${smallFs}; font-weight: bold; color: #92400e; background: #fef3c7; padding: 0 2px; border-radius: 2px;">${p.cutLength}mm RÅ</span>
+                                    ${sFactor >= 0.75 ? `<span style="font-size: ${miniFs}; color: #4b5563;">(netto: ${p.exactLength})</span>` : ''}
                                 `;
                             } else if (displayMode === 'both') {
                                 printPieceMeasureHTML = `
-                                    <span style="font-family: monospace; font-size: 8px; color: #111;">Net: <b>${p.exactLength}</b></span>
-                                    <span style="font-family: monospace; font-size: 8px; font-weight: bold; color: #92400e;">Rå: <b>${p.cutLength}</b></span>
+                                    <span style="font-family: monospace; font-size: ${miniFs}; color: #111;">Net: <b>${p.exactLength}</b></span>
+                                    <span style="font-family: monospace; font-size: ${miniFs}; font-weight: bold; color: #92400e;">Rå: <b>${p.cutLength}</b></span>
                                 `;
                             }
 
                             html += `
                                 <div style="display: flex; height: 100%; width: ${w}%; background: ${color}; border-right: 1px solid #374151; box-sizing: border-box; position: relative;">
-                                    <div style="width: ${netW}%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; line-height: 1.1; overflow: hidden; padding: 1px;">
-                                        <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; color: #111;">${p.tag}</strong>
+                                    <div style="width: ${netW}%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: ${smallFs}; line-height: 1.1; overflow: hidden; padding: 1px;">
+                                        <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; color: #111; font-size: ${smallFs};">${p.tag}</strong>
                                         ${printPieceMeasureHTML}
                                     </div>
                                     ${p.margin > 0 ? `
-                                    <div style="width: ${margW}%; background: rgba(239, 68, 68, 0.25); border-left: 1px dashed rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: #991b1b;">
+                                    <div style="width: ${margW}%; background: rgba(239, 68, 68, 0.25); border-left: 1px dashed rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: ${miniFs}; font-weight: bold; color: #991b1b;">
                                         ${p.margin}
                                     </div>` : ''}
                                 </div>
@@ -1767,7 +1782,7 @@
                         if (stock.waste > 0) {
                             const wasteW = (stock.waste / stock.originalLength) * 100;
                             html += `
-                                <div style="width: ${wasteW}%; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #4b5563; background: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 5px, #f3f4f6 5px, #f3f4f6 10px);">
+                                <div style="width: ${wasteW}%; display: flex; align-items: center; justify-content: center; font-size: ${miniFs}; color: #4b5563; background: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 5px, #f3f4f6 5px, #f3f4f6 10px);">
                                     Spild ${stock.waste}mm
                                 </div>
                             `;
@@ -1797,13 +1812,13 @@
 
                             rows += `
                                 <tr style="border-bottom: 1px solid #e5e7eb;">
-                                    <td style="padding: 4px 6px; text-align: center; border-right: 1px solid #e5e7eb; font-family: monospace; font-size: 11px; color: #374151;">[ ]</td>
-                                    <td style="padding: 4px 6px; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${itemNum++}. ${tagVal}</td>
-                                    <td style="padding: 4px 6px; border-right: 1px solid #e5e7eb; font-family: monospace;">${dim}</td>
-                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">${exactLen} mm</td>
-                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb; color: #dc2626;">+${marginVal} mm</td>
-                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${cutLen} mm</td>
-                                    <td style="padding: 4px 6px; text-align: center; color: #4b5563;">Bræt #${bIdx + 1} (${board.originalLength}mm)</td>
+                                    <td style="padding: ${tdPad}; text-align: center; border-right: 1px solid #e5e7eb; font-family: monospace; font-size: ${smallFs}; color: #374151;">[ ]</td>
+                                    <td style="padding: ${tdPad}; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${itemNum++}. ${tagVal}</td>
+                                    <td style="padding: ${tdPad}; border-right: 1px solid #e5e7eb; font-family: monospace;">${dim}</td>
+                                    <td style="padding: ${tdPad}; text-align: right; border-right: 1px solid #e5e7eb;">${exactLen} mm</td>
+                                    <td style="padding: ${tdPad}; text-align: right; border-right: 1px solid #e5e7eb; color: #dc2626;">+${marginVal} mm</td>
+                                    <td style="padding: ${tdPad}; text-align: right; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${cutLen} mm</td>
+                                    <td style="padding: ${tdPad}; text-align: center; color: #4b5563;">Bræt #${bIdx + 1} (${board.originalLength}mm)</td>
                                 </tr>
                             `;
                         });
@@ -1811,21 +1826,21 @@
                 }
 
                 html += `
-                    <div class="print-avoid-break" style="margin-bottom: 12px; margin-top: 6px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #374151; padding-bottom: 3px; margin-bottom: 5px;">
-                            <strong style="font-size: 11px; text-transform: uppercase; color: #111827;">Stykkliste / Afkorterliste</strong>
-                            <span style="font-size: 9.5px; color: #6b7280;">Brug [ ] til at afkrydse ved saven</span>
+                    <div class="print-avoid-break" style="margin-bottom: ${mbSection}; margin-top: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #374151; padding-bottom: 2px; margin-bottom: 4px;">
+                            <strong style="font-size: ${smallFs}; text-transform: uppercase; color: #111827;">Stykkliste / Afkorterliste</strong>
+                            <span style="font-size: ${miniFs}; color: #6b7280;">Brug [ ] til at afkrydse ved saven</span>
                         </div>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; border: 1px solid #d1d5db;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: ${miniFs}; border: 1px solid #d1d5db;">
                             <thead>
                                 <tr style="background-color: #f3f4f6; border-bottom: 1px solid #9ca3af; text-align: left;">
-                                    <th style="padding: 4px 6px; text-align: center; width: 30px; border-right: 1px solid #e5e7eb;">[✓]</th>
-                                    <th style="padding: 4px 6px; border-right: 1px solid #e5e7eb;">Emne / Mærkning</th>
-                                    <th style="padding: 4px 6px; border-right: 1px solid #e5e7eb;">Dimension</th>
-                                    <th style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">Nettomål</th>
-                                    <th style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">Tillæg</th>
-                                    <th style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">Skærelængde</th>
-                                    <th style="padding: 4px 6px; text-align: center;">Placeret på</th>
+                                    <th style="padding: ${tdPad}; text-align: center; width: 26px; border-right: 1px solid #e5e7eb;">[✓]</th>
+                                    <th style="padding: ${tdPad}; border-right: 1px solid #e5e7eb;">Emne / Mærkning</th>
+                                    <th style="padding: ${tdPad}; border-right: 1px solid #e5e7eb;">Dimension</th>
+                                    <th style="padding: ${tdPad}; text-align: right; border-right: 1px solid #e5e7eb;">Nettomål</th>
+                                    <th style="padding: ${tdPad}; text-align: right; border-right: 1px solid #e5e7eb;">Tillæg</th>
+                                    <th style="padding: ${tdPad}; text-align: right; border-right: 1px solid #e5e7eb;">Skærelængde</th>
+                                    <th style="padding: ${tdPad}; text-align: center;">Placeret på</th>
                                 </tr>
                             </thead>
                             <tbody>${rows}</tbody>
@@ -1849,18 +1864,18 @@
                 }
 
                 html += `
-                    <div class="print-avoid-break" style="margin-bottom: 10px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background-color: #f9fafb; font-size: 10px;">
-                        <strong style="font-size: 11px; color: #111827; display: block; margin-bottom: 4px;">Anbefalet Indkøb (Tømmerhandel):</strong>
+                    <div class="print-avoid-break" style="margin-bottom: ${mbItem}; padding: ${padBox}; border: 1px solid #d1d5db; border-radius: 5px; background-color: #f9fafb; font-size: ${smallFs};">
+                        <strong style="font-size: ${bodyFs}; color: #111827; display: block; margin-bottom: 3px;">Anbefalet Indkøb (Tømmerhandel):</strong>
                         ${shoppingItems.length > 0 
-                            ? `<ul style="margin: 0; padding-left: 18px; line-height: 1.4;">${shoppingItems.map(i => `<li>${i}</li>`).join('')}</ul>` 
+                            ? `<ul style="margin: 0; padding-left: 16px; line-height: 1.35;">${shoppingItems.map(i => `<li>${i}</li>`).join('')}</ul>` 
                             : '<p style="margin: 0; color: #1d4ed8;">Alt dækket af eget lager (ingen nye indkøb nødvendige).</p>'}
                     </div>
                 `;
             }
 
             html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e5e7eb; padding-top: 5px; margin-top: 10px; font-size: 9px; color: #9ca3af;">
-                    <span>Træoptimerings-App v3.9.8</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e5e7eb; padding-top: 4px; margin-top: ${mbItem}; font-size: ${miniFs}; color: #9ca3af;">
+                    <span>Træoptimerings-App v3.9.9</span>
                     <span>Udskrevet fra træoptimerings-værktøj</span>
                 </div>
             `;
@@ -1927,51 +1942,45 @@
                     printPreviewSheet.style.boxSizing = 'border-box';
                     printPreviewSheet.style.borderRadius = '6px';
                     printPreviewSheet.style.backgroundColor = '#ffffff';
+                    printPreviewSheet.style.zoom = '1';
 
                     if (isA3 && isLandscape) {
-                        // A3 Liggende: Meget bredt ark med maksimal plads, indholdet skaleres mindre
+                        // A3 Liggende: Meget bredt ark med maksimal plads
                         printPreviewSheet.style.maxWidth = '880px';
-                        printPreviewSheet.style.minWidth = '660px';
-                        printPreviewSheet.style.minHeight = '620px';
+                        printPreviewSheet.style.minWidth = '620px';
+                        printPreviewSheet.style.minHeight = '622px';
                         printPreviewSheet.style.aspectRatio = '420 / 297';
                         printPreviewSheet.style.border = '2px solid #64748b';
-                        printPreviewSheet.style.boxShadow = '0 18px 40px -4px rgba(0,0,0,0.25), 0 6px 12px -2px rgba(0,0,0,0.12)';
-                        printPreviewSheet.style.padding = '24px 32px';
+                        printPreviewSheet.style.boxShadow = '0 16px 36px -4px rgba(0,0,0,0.22)';
+                        printPreviewSheet.style.padding = '26px 32px';
                     } else if (isA3 && !isLandscape) {
                         // A3 Stående: Højt ark med plads til mange lodrette rækker
-                        printPreviewSheet.style.maxWidth = '580px';
+                        printPreviewSheet.style.maxWidth = '620px';
                         printPreviewSheet.style.minWidth = '420px';
-                        printPreviewSheet.style.minHeight = '820px';
+                        printPreviewSheet.style.minHeight = '876px';
                         printPreviewSheet.style.aspectRatio = '297 / 420';
                         printPreviewSheet.style.border = '2px solid #64748b';
-                        printPreviewSheet.style.boxShadow = '0 16px 36px -4px rgba(0,0,0,0.22), 0 5px 10px -2px rgba(0,0,0,0.10)';
-                        printPreviewSheet.style.padding = '30px 24px';
+                        printPreviewSheet.style.boxShadow = '0 14px 32px -4px rgba(0,0,0,0.20)';
+                        printPreviewSheet.style.padding = '28px 24px';
                     } else if (!isA3 && isLandscape) {
                         // A4 Liggende: Klassisk liggende papir
-                        printPreviewSheet.style.maxWidth = '740px';
-                        printPreviewSheet.style.minWidth = '520px';
-                        printPreviewSheet.style.minHeight = '523px';
+                        printPreviewSheet.style.maxWidth = '760px';
+                        printPreviewSheet.style.minWidth = '500px';
+                        printPreviewSheet.style.minHeight = '537px';
                         printPreviewSheet.style.aspectRatio = '297 / 210';
                         printPreviewSheet.style.border = '2px solid #94a3b8';
-                        printPreviewSheet.style.boxShadow = '0 14px 30px -4px rgba(0,0,0,0.2), 0 4px 8px -2px rgba(0,0,0,0.08)';
-                        printPreviewSheet.style.padding = '20px 26px';
+                        printPreviewSheet.style.boxShadow = '0 12px 28px -4px rgba(0,0,0,0.18)';
+                        printPreviewSheet.style.padding = '22px 28px';
                     } else {
                         // A4 Stående: Standard lodret papir
-                        printPreviewSheet.style.maxWidth = '490px';
+                        printPreviewSheet.style.maxWidth = '520px';
                         printPreviewSheet.style.minWidth = '0px';
-                        printPreviewSheet.style.minHeight = '693px';
+                        printPreviewSheet.style.minHeight = '735px';
                         printPreviewSheet.style.aspectRatio = '210 / 297';
                         printPreviewSheet.style.border = '1px solid #cbd5e1';
-                        printPreviewSheet.style.boxShadow = '0 10px 25px -4px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.05)';
+                        printPreviewSheet.style.boxShadow = '0 10px 25px -4px rgba(0,0,0,0.15)';
                         printPreviewSheet.style.padding = '24px 20px';
                     }
-
-                    // A3 har dobbelt areal af A4 -> indholdet skaleres mindre så det matcher det store ark og den ekstra plads
-                    const baseZoom = isA3 
-                        ? (isLandscape ? 0.62 : 0.68)
-                        : (isLandscape ? 0.88 : 0.95);
-                    const zoomFactor = (scale / 100) * baseZoom;
-                    printPreviewSheet.style.zoom = String(zoomFactor);
                 }
             } catch (err) {
                 console.error('Fejl under opdatering af print-forhåndsvisning:', err);
@@ -2017,9 +2026,6 @@
                 document.head.appendChild(dynamicStyle);
             }
 
-            const barH = scale < 75 ? '34px' : (scale < 85 ? '42px' : '52px');
-            const printZoomFactor = (scale / 100) * (size === 'A3' ? 0.75 : 1.0);
-
             dynamicStyle.innerHTML = `
                 @media print {
                     @page {
@@ -2032,14 +2038,10 @@
                     #print-render-zone {
                         display: block !important;
                         width: 100% !important;
-                        zoom: ${printZoomFactor};
                         background: white !important;
                         color: #111827 !important;
                         padding: 0 !important;
                         margin: 0 !important;
-                    }
-                    .stock-bar {
-                        height: ${barH} !important;
                     }
                     .print-avoid-break {
                         break-inside: avoid !important;
@@ -2155,7 +2157,7 @@
             const projectName = printProjectNameInput.value.trim() || 'trae-projekt';
             const filename = `${projectName.replace(/[^a-z0-9æøå]/gi, '_').toLowerCase()}.json`;
             const projectData = {
-                version: '3.9.8',
+                version: '3.9.9',
                 availableDimensions,
                 requiredPieces,
                 stockLengths,
