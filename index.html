@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Træoptimerings-App v3.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -206,6 +209,10 @@
                                 <button id="load-project-btn" class="rounded-md bg-green-600 py-2 px-3 text-sm font-medium text-white shadow-sm hover:bg-green-700 transition">Indlæs</button>
                                 <button id="delete-project-btn" class="rounded-md bg-red-600 py-2 px-3 text-sm font-medium text-white shadow-sm hover:bg-red-700 transition">Slet</button>
                             </div>
+                            <div class="flex items-center justify-between mt-1.5 text-xs text-gray-500">
+                                <button id="diagnose-storage-btn" type="button" class="text-blue-600 hover:text-blue-800 underline font-medium">🔍 Søg / Gendan forsvundne projekter</button>
+                                <span id="saved-count-label" class="text-gray-400 font-normal"></span>
+                            </div>
                         </div>
                         <hr class="border-gray-200">
                         <div>
@@ -384,6 +391,8 @@
         const savedProjectsSelect = document.getElementById('saved-projects-select');
         const loadProjectBtn = document.getElementById('load-project-btn');
         const deleteProjectBtn = document.getElementById('delete-project-btn');
+        const diagnoseStorageBtn = document.getElementById('diagnose-storage-btn');
+        const savedCountLabel = document.getElementById('saved-count-label');
         const saveFileBtn = document.getElementById('save-file-btn');
         const loadFileBtn = document.getElementById('load-file-btn');
         const fileInput = document.getElementById('file-input');
@@ -411,6 +420,7 @@
         saveProjectBtn.addEventListener('click', handleSaveProject);
         loadProjectBtn.addEventListener('click', handleLoadProject);
         deleteProjectBtn.addEventListener('click', handleDeleteProject);
+        if (diagnoseStorageBtn) diagnoseStorageBtn.addEventListener('click', handleDiagnoseStorage);
         saveFileBtn.addEventListener('click', handleSaveToFile);
         loadFileBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleLoadFromFile);
@@ -434,7 +444,7 @@
         });
 
         // Opdater versionsdato automatisk
-        document.getElementById('version-info').innerText = "Sidst opdateret: " + document.lastModified;
+        document.getElementById('version-info').innerHTML = "Version 3.9.2 &bull; Sidst opdateret: " + document.lastModified;
 
         // --- LIVE BEREGNINGSTRIGGER ---
         function triggerAutoCalculate() {
@@ -1145,11 +1155,14 @@
             if (confirm(`Er du sikker på, at du vil slette projektet '${name}'?`)) {
                 const projects = getSavedProjects();
                 delete projects[name];
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(projects)); } catch(e){}
                 try {
                     const p3 = JSON.parse(localStorage.getItem('traeOptAppProjects_v3') || '{}');
                     delete p3[name];
                     localStorage.setItem('traeOptAppProjects_v3', JSON.stringify(p3));
+                } catch(e){}
+                try {
+                    if (localStorage.getItem(name)) localStorage.removeItem(name);
                 } catch(e){}
                 populateProjectsDropdown();
             }
@@ -1246,16 +1259,72 @@
         }
 
         function getSavedProjects() {
-            let p1 = {};
-            let p2 = {};
-            try { p1 = JSON.parse(localStorage.getItem('traeOptAppProjects') || '{}'); } catch(e){}
-            try { p2 = JSON.parse(localStorage.getItem('traeOptAppProjects_v3') || '{}'); } catch(e){}
-            return { ...p1, ...p2 };
+            let allProjects = {};
+
+            function isProjectObj(obj) {
+                return obj && typeof obj === 'object' && (
+                    Array.isArray(obj.availableDimensions) ||
+                    Array.isArray(obj.requiredPieces) ||
+                    Array.isArray(obj.stockLengths)
+                );
+            }
+
+            // 1. Primære kendte nøgler
+            try {
+                const p1 = JSON.parse(localStorage.getItem('traeOptAppProjects') || '{}');
+                if (p1 && typeof p1 === 'object') Object.assign(allProjects, p1);
+            } catch(e){}
+            try {
+                const p2 = JSON.parse(localStorage.getItem('traeOptAppProjects_v3') || '{}');
+                if (p2 && typeof p2 === 'object') Object.assign(allProjects, p2);
+            } catch(e){}
+
+            // 2. Dybsscanning af hele localStorage for eventuelle andre nøgler eller enkeltprojekter
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (!key) continue;
+                    if (key === 'traeOptAppProjects' || key === 'traeOptAppProjects_v3') continue;
+
+                    try {
+                        const raw = localStorage.getItem(key);
+                        if (!raw) continue;
+                        const val = JSON.parse(raw);
+                        if (!val || typeof val !== 'object') continue;
+
+                        let foundSub = false;
+                        for (const subKey of Object.keys(val)) {
+                            if (isProjectObj(val[subKey])) {
+                                allProjects[subKey] = val[subKey];
+                                foundSub = true;
+                            }
+                        }
+
+                        if (!foundSub && isProjectObj(val)) {
+                            allProjects[key] = val;
+                        }
+                    } catch(e){}
+                }
+            } catch(e){}
+
+            // Konsolider automatisk i primær STORAGE_KEY
+            if (Object.keys(allProjects).length > 0) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allProjects));
+                } catch(e){}
+            }
+
+            return allProjects;
         }
 
         function populateProjectsDropdown() {
             const projects = getSavedProjects();
             const projectNames = Object.keys(projects);
+            const countLabel = document.getElementById('saved-count-label');
+            if (countLabel) {
+                countLabel.innerText = projectNames.length > 0 ? `(${projectNames.length} fundet)` : '';
+            }
+
             if (projectNames.length === 0) {
                 savedProjectsSelect.innerHTML = `<option>Ingen gemte projekter</option>`;
                 savedProjectsSelect.disabled = true;
@@ -1266,6 +1335,25 @@
                 savedProjectsSelect.disabled = false;
                 loadProjectBtn.disabled = false;
                 deleteProjectBtn.disabled = false;
+            }
+        }
+
+        function handleDiagnoseStorage() {
+            const projects = getSavedProjects();
+            const names = Object.keys(projects);
+            populateProjectsDropdown();
+
+            let allKeys = [];
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    allKeys.push(localStorage.key(i));
+                }
+            } catch(e){}
+
+            if (names.length > 0) {
+                alert(`Fandt ${names.length} gemte projekt(er) i browserens hukommelse:\n\n• ${names.join('\n• ')}\n\nDe er nu klar i rullemenuen!`);
+            } else {
+                alert(`Ingen gemte projekter fundet i denne browsers hukommelse (localStorage).\n\nRegistrerede nøgler i denne browser: ${allKeys.length > 0 ? allKeys.join(', ') : 'Ingen fundet (tom)'}\n\nVigtigt at tjekke:\n1. Oprettede du projekterne i en anden browser (f.eks. Edge frem for Chrome)?\n2. Oprettede du dem i en fane for sig selv på https://michaelkhansen2.github.io/traeoptimering-app-V3/ i stedet for inde i Moodle? (Browseren isolerer Moodle og separate faner af sikkerhedshensyn).\n3. Var du i privat/inkognito-tilstand da de blev gemt?\n\nTip: Fremover kan du bruge knappen 'Gem til Fil (.json)' for altid at have en sikker kopi på computeren!`);
             }
         }
 
