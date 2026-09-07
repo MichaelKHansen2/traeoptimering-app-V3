@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Træoptimerings-App v4.1.1</title>
+    <title>Træoptimerings-App v4.2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -601,6 +601,86 @@
                 .replace(/[×\*]/g, 'x');
         }
 
+        function parseDim(dimStr) {
+            const m = (dimStr || '').match(/(\d+)\s*[xX*]\s*(\d+)/);
+            if (m) return { width: parseInt(m[1]), height: parseInt(m[2]) };
+            return { width: 45, height: 100 };
+        }
+
+        // Beregner den teoretisk mest optimale standard handelslængde (2,4 - 5,4 m) for en given stykliste,
+        // samt reel CO2-gevinst baseret på undgået nyproduktion og genbrug af lagertræ.
+        function calculateDimensionBenchmarks(piecesByDim, totalUsedStockLength, totalRequiredLength, totalWaste, wastePercentage) {
+            const benchmarks = {};
+            for (const dim in piecesByDim) {
+                const pieces = piecesByDim[dim];
+                if (!pieces || pieces.length === 0) continue;
+                const maxCut = Math.max(...pieces.map(p => p.cutLength));
+                const candidates = STANDARD_LENGTHS.filter(l => l >= maxCut);
+                const sorted = [...pieces].sort((a, b) => b.cutLength - a.cutLength);
+                const dimReqLength = sorted.reduce((sum, p) => sum + p.cutLength, 0);
+
+                let bestUniform = null;
+                let minUniformWastePct = Infinity;
+
+                if (candidates.length > 0) {
+                    for (const len of candidates) {
+                        let boards = [];
+                        for (const p of sorted) {
+                            let placed = false;
+                            boards.sort((a, b) => a - b);
+                            for (let i = 0; i < boards.length; i++) {
+                                if (boards[i] >= p.cutLength) {
+                                    boards[i] -= p.cutLength;
+                                    placed = true;
+                                    break;
+                                }
+                            }
+                            if (!placed) boards.push(len - p.cutLength);
+                        }
+                        const totalBought = boards.length * len;
+                        const waste = totalBought - dimReqLength;
+                        const wastePct = totalBought > 0 ? (waste / totalBought) * 100 : 0;
+
+                        if (wastePct < minUniformWastePct) {
+                            minUniformWastePct = wastePct;
+                            bestUniform = {
+                                length: len,
+                                count: boards.length,
+                                totalBought,
+                                waste,
+                                wastePct
+                            };
+                        }
+                    }
+                }
+                benchmarks[dim] = {
+                    bestUniform,
+                    dimReqLength,
+                    dimName: dim
+                };
+            }
+
+            const usedMeters = (totalUsedStockLength || 0) / 1000;
+            const reqMeters = (totalRequiredLength || 0) / 1000;
+            const wasteMeters = (totalWaste || 0) / 1000;
+            const naiveWasteRate = 0.28;
+            const naiveTotalMeters = reqMeters / (1 - naiveWasteRate);
+            const savedMetersVsNaive = Math.max(0, naiveTotalMeters - usedMeters);
+            const co2SavedOptimization = savedMetersVsNaive * 1.1;
+            const co2AvoidedNewTimber = usedMeters * 0.9;
+            const totalCo2Benefit = co2SavedOptimization + co2AvoidedNewTimber;
+
+            return {
+                benchmarks,
+                usedMeters,
+                reqMeters,
+                wasteMeters,
+                wastePercentage: wastePercentage || 0,
+                savedMetersVsNaive,
+                totalCo2Benefit
+            };
+        }
+
         // --- DOM ELEMENT REFERENCES ---
         const printProjectNameInput = document.getElementById('print-project-name');
         const projectNameInput = document.getElementById('project-name');
@@ -1130,10 +1210,14 @@
                     // 3. Hvis stadig ikke placeret: suppler med standard handelslængde (2,4 - 5,4 m)
                     if (!placed) {
                         if (!autoSupplement && (hasUserStock || (currentStock && currentStock.length > 0))) {
+                            const dPieces = piecesByDim[dim] || [];
+                            const maxCut = Math.max(...dPieces.map(p => p.cutLength));
+                            const suitable = STANDARD_LENGTHS.filter(l => l >= maxCut);
+                            const bestStdHint = suitable.length > 0 ? ` (Tip: Den mest optimale standardlængde for disse emner er ${(suitable[0]/1000).toFixed(1)} m)` : '';
                             if (hasUserStock) {
-                                throw new Error(`Eget lager af dimension ${dim} er opbrugt! Mangler bræt til emne '${piece.tag}' (${piece.exactLength} mm + ${piece.margin} mm ekstra). Tilføj flere brædder på lager, eller slå 'Suppler automatisk med standardlængder' til.`);
+                                throw new Error(`Eget lager af dimension ${dim} er opbrugt! Mangler bræt til emne '${piece.tag}' (${piece.exactLength} mm + ${piece.margin} mm ekstra). Tilføj flere brædder på lager${bestStdHint}, eller slå 'Suppler automatisk med standardlængder' til.`);
                             } else {
-                                throw new Error(`Der er ikke tilføjet noget lager for dimension ${dim} i sektion 3. Tilføj lager til denne dimension, eller slå 'Suppler automatisk med standardlængder' til.`);
+                                throw new Error(`Der er ikke tilføjet noget lager for dimension ${dim} i sektion 3. Tilføj lager til denne dimension${bestStdHint}, eller slå 'Suppler automatisk med standardlængder' til.`);
                             }
                         }
 
@@ -1187,6 +1271,7 @@
 
             const totalWaste = totalUsedStockLength - totalRequiredLength;
             const wastePercentage = totalUsedStockLength > 0 ? (totalWaste / totalUsedStockLength) * 100 : 0;
+            const sustainability = calculateDimensionBenchmarks(piecesByDim, totalUsedStockLength, totalRequiredLength, totalWaste, wastePercentage);
 
             return {
                 plan: finalPlan,
@@ -1195,7 +1280,8 @@
                 totalWaste,
                 wastePercentage,
                 shoppingList,
-                piecesByDim
+                piecesByDim,
+                sustainability
             };
         }
 
@@ -1468,19 +1554,7 @@
         }
 
         function renderSustainabilityReport(res) {
-            // Beregn naiv afkortning (hvis man købte 1 standardbræt pr. emne)
-            let totalNaiveLength = 0;
-            for (const dim in res.piecesByDim) {
-                res.piecesByDim[dim].forEach(p => {
-                    const suitable = STANDARD_LENGTHS.find(l => l >= p.cutLength) || 5400;
-                    totalNaiveLength += suitable;
-                });
-            }
-
-            const savedMeters = Math.max(0, (totalNaiveLength - res.totalUsedStockLength) / 1000);
-            const savedPct = totalNaiveLength > 0 ? ((totalNaiveLength - res.totalUsedStockLength) / totalNaiveLength) * 100 : 0;
-            // Estimeret CO2-besparelse: ca. 0.9 kg CO2 pr. meter konstruktionstræ (45x120 snit)
-            const co2SavedKg = savedMeters * 0.9;
+            const sust = res.sustainability || calculateDimensionBenchmarks(res.piecesByDim, res.totalUsedStockLength, res.totalRequiredLength, res.totalWaste, res.wastePercentage);
 
             // Indkøbsliste baseret på shoppingList
             let shoppingHTML = '';
@@ -1499,36 +1573,105 @@
                 }
             }
 
+            // Benchmark-kort pr. dimension til optimal handelslængde
+            let benchmarkCardsHTML = '';
+            if (sust && sust.benchmarks) {
+                for (const dim in sust.benchmarks) {
+                    const b = sust.benchmarks[dim];
+                    if (b && b.bestUniform) {
+                        const lenM = (b.bestUniform.length / 1000).toFixed(1);
+                        const isStockBetter = (res.wastePercentage <= b.bestUniform.wastePct);
+                        const comparisonText = (!hasPurchases)
+                            ? (isStockBetter 
+                                ? `<span class="text-emerald-700 font-medium">✓ Dit lager udnyttes fremragende (${res.wastePercentage.toFixed(1)}% spild) – bedre end nye standardlængder.</span>`
+                                : `<span class="text-amber-800 font-medium">Dit lager har ${res.wastePercentage.toFixed(1)}% spild. Ved køb af ${lenM} m brædder ville spildet reduceres til ${b.bestUniform.wastePct.toFixed(1)}%.</span>`)
+                            : `<span class="text-indigo-700 font-medium">Giver lavest muligt spild (${b.bestUniform.wastePct.toFixed(1)}%) ved køb af ensartede brædder.</span>`;
+
+                        benchmarkCardsHTML += `
+                            <div class="bg-white p-2.5 sm:p-3 rounded-lg border border-amber-200 shadow-2xs">
+                                <div class="flex items-center justify-between flex-wrap gap-1 mb-1">
+                                    <span class="font-bold text-gray-900 text-xs md:text-sm">${dim}</span>
+                                    <span class="text-xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
+                                        Optimal længde: ${lenM} m (${b.bestUniform.length} mm)
+                                    </span>
+                                </div>
+                                <div class="text-xs text-gray-600 flex flex-wrap gap-x-3 gap-y-1 mb-1.5">
+                                    <span>Antal: <strong>${b.bestUniform.count} stk.</strong></span>
+                                    <span>Spild: <strong class="${b.bestUniform.wastePct > 15 ? 'text-amber-700' : 'text-emerald-700'}">${b.bestUniform.wastePct.toFixed(1)}%</strong> (${(b.bestUniform.waste/1000).toFixed(2)} m)</span>
+                                </div>
+                                <div class="text-[11px] leading-relaxed border-t border-gray-100 pt-1">
+                                    ${comparisonText}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
             const html = `
                 <div class="border-b border-gray-200 pb-3 mb-3">
-                    <h3 class="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                        Materialeliste & Bæredygtighed
-                    </h3>
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            Materialeliste, Optimal Længde & Bæredygtighed
+                        </h3>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Grøn Ressourceoptimering
+                        </span>
+                    </div>
                 </div>
                 
-                <div class="space-y-3 text-sm">
+                <div class="space-y-3.5 text-sm">
                     ${hasPurchases ? `
-                    <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-md">
-                        <h4 class="font-bold text-indigo-900 text-xs md:text-sm mb-1">Anbefalet Indkøb (Tømmerhandel):</h4>
-                        <ul class="list-disc list-inside space-y-1 text-indigo-800">${shoppingHTML}</ul>
+                    <div class="bg-indigo-50 border border-indigo-200 p-3 rounded-lg shadow-2xs">
+                        <div class="flex items-center gap-1.5 font-bold text-indigo-950 text-xs md:text-sm mb-1">
+                            <span class="text-indigo-600">🛒</span>
+                            <span>Anbefalet Indkøb hos Tømmerhandel:</span>
+                        </div>
+                        <ul class="list-disc list-inside space-y-1 text-indigo-900 text-xs md:text-sm pl-1">${shoppingHTML}</ul>
                     </div>` : `
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-md text-xs md:text-sm text-blue-800">
-                        <strong>Alt dækket af eget lager:</strong> Ingen nye indkøb nødvendige.
+                    <div class="bg-emerald-50/80 border border-emerald-200 p-3 rounded-lg shadow-2xs text-xs md:text-sm text-emerald-950">
+                        <div class="flex items-center gap-2 font-bold text-emerald-800 mb-0.5">
+                            <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px]">✓</span>
+                            <span>Alt dækket af eget lager</span>
+                        </div>
+                        <p class="text-emerald-800/90 leading-relaxed text-xs">
+                            Alle emner skæres ud af dit registrerede lager – ingen nye indkøb er nødvendige.
+                        </p>
                     </div>`}
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-md">
-                            <span class="text-xs font-medium text-emerald-800 block">Træ sparet ved optimering:</span>
-                            <span class="text-lg font-bold text-emerald-700">${savedMeters.toFixed(2)} meter</span>
-                            <span class="text-xs text-emerald-600 block mt-0.5">(-${savedPct.toFixed(0)}% ift. uoptimeret køb)</span>
+                    <!-- Optimal Standardlængde til nyindkøb -->
+                    <div class="bg-amber-50/70 border border-amber-200 p-3 rounded-lg shadow-2xs text-xs md:text-sm text-amber-950">
+                        <div class="flex items-center gap-2 font-bold text-amber-900 mb-1">
+                            <span class="text-amber-700 text-base">📐</span>
+                            <span>Optimal Handelslængde (Vejledning til fremtidigt indkøb):</span>
                         </div>
-                        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-md">
-                            <span class="text-xs font-medium text-emerald-800 block">Anslået CO2-besparelse:</span>
-                            <span class="text-lg font-bold text-emerald-700">ca. ${co2SavedKg.toFixed(1)} kg CO2</span>
-                            <span class="text-xs text-emerald-600 block mt-0.5">Mindre fældning og affald</span>
+                        <p class="text-amber-900/90 text-xs mb-2">
+                            Hvis du skal indkøbe standardlængder (2,4 – 5,4 m) til disse emner, er her de mest optimale længder for at opnå mindst muligt spild:
+                        </p>
+                        <div class="space-y-2">
+                            ${benchmarkCardsHTML || '<p class="text-xs text-gray-500 italic">Ingen standardlængder fundet.</p>'}
+                        </div>
+                    </div>
+
+                    <!-- Bæredygtighed & CO2 nøgletal -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                        <div class="bg-white border border-gray-200 p-2.5 sm:p-3 rounded-lg shadow-2xs">
+                            <span class="text-[11px] font-medium text-gray-500 block">Anvendt træ / lager:</span>
+                            <span class="text-base md:text-lg font-bold text-gray-800">${sust.usedMeters.toFixed(2)} m</span>
+                            <span class="text-[11px] text-gray-500 block mt-0.5">Spild: ${sust.wasteMeters.toFixed(2)} m (${res.wastePercentage.toFixed(1)}%)</span>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-200 p-2.5 sm:p-3 rounded-lg shadow-2xs">
+                            <span class="text-[11px] font-medium text-emerald-800 block">Træ sparet v. optimering:</span>
+                            <span class="text-base md:text-lg font-bold text-emerald-700">${sust.savedMetersVsNaive.toFixed(2)} m</span>
+                            <span class="text-[11px] text-emerald-600 block mt-0.5">Mindre unødigt afskær</span>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-200 p-2.5 sm:p-3 rounded-lg shadow-2xs">
+                            <span class="text-[11px] font-medium text-emerald-800 block">Estimeret CO₂-gevinst:</span>
+                            <span class="text-base md:text-lg font-bold text-emerald-700">ca. ${sust.totalCo2Benefit.toFixed(1)} kg CO₂</span>
+                            <span class="text-[11px] text-emerald-600 block mt-0.5">${hasPurchases ? 'Mindre fældning & transport' : '100% genbrug af lager'}</span>
                         </div>
                     </div>
                 </div>`;
@@ -1940,7 +2083,7 @@
             const H_STOCK_BAR = 21 * sFactor;
             const H_TABLE_HDR = 14 * sFactor;
             const H_TABLE_ROW = 5.8 * sFactor;
-            const H_SHOPPING = incShopping ? 22 * sFactor : 0;
+            const H_SHOPPING = incShopping ? 34 * sFactor : 0;
 
             const pages = [];
             let currentPageItems = [];
@@ -2175,7 +2318,7 @@
                 }
             }
 
-            // 4. Indkøb
+            // 4. Indkøb & Bæredygtighed
             if (incShopping) {
                 if (curH + H_SHOPPING > pageBudget && currentPageItems.length > 0) finishPage();
                 let shoppingItems = [];
@@ -2190,14 +2333,56 @@
                     }
                 }
 
+                const sust = res.sustainability || calculateDimensionBenchmarks(res.piecesByDim, res.totalUsedStockLength, res.totalRequiredLength, res.totalWaste, res.wastePercentage);
+                const benchmarkPrintLines = [];
+                if (sust && sust.benchmarks) {
+                    for (const dim in sust.benchmarks) {
+                        const b = sust.benchmarks[dim];
+                        if (b && b.bestUniform) {
+                            benchmarkPrintLines.push(`<strong>${dim}:</strong> Optimal handelslængde er <strong>${(b.bestUniform.length/1000).toFixed(1)} m</strong> (${b.bestUniform.length} mm) &bull; ${b.bestUniform.count} stk. giver kun ${b.bestUniform.wastePct.toFixed(1)}% spild.`);
+                        }
+                    }
+                }
+
                 currentPageItems.push({
                     type: 'shopping',
                     html: `
                         <div class="print-avoid-break" style="margin-bottom: ${mbItem}; padding: ${padBox}; border: 1px solid #d1d5db; border-radius: 5px; background-color: #f9fafb; font-size: ${smallFs};">
-                            <strong style="font-size: ${bodyFs}; color: #111827; display: block; margin-bottom: 2px;">Anbefalet Indkøb (Tømmerhandel):</strong>
-                            ${shoppingItems.length > 0 
-                                ? `<ul style="margin: 0; padding-left: 14px; line-height: 1.3;">${shoppingItems.map(i => `<li>${i}</li>`).join('')}</ul>` 
-                                : '<p style="margin: 0; color: #1d4ed8;">Alt dækket af eget lager (ingen nye indkøb nødvendige).</p>'}
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 2px; margin-bottom: 4px;">
+                                <strong style="font-size: ${bodyFs}; color: #111827;">Anbefalet Indkøb & Bæredygtighedsanalyse</strong>
+                                <span style="font-size: ${miniFs}; color: #059669; font-weight: 600;">Klimaberegning & vejledning</span>
+                            </div>
+
+                            <div style="margin-bottom: 3px;">
+                                <strong style="color: #374151; font-size: ${smallFs};">Indkøbsstatus:</strong>
+                                ${shoppingItems.length > 0 
+                                    ? `<ul style="margin: 2px 0 0 0; padding-left: 14px; line-height: 1.25; color: #1e40af;">${shoppingItems.map(i => `<li>${i}</li>`).join('')}</ul>` 
+                                    : '<span style="color: #059669; margin-left: 4px; font-weight: 600;">✓ Alt dækket af eget lager (ingen nyindkøb nødvendige).</span>'}
+                            </div>
+
+                            ${benchmarkPrintLines.length > 0 ? `
+                            <div style="margin-bottom: 3px; background-color: #fefce8; border: 1px solid #fef08a; padding: 3px 6px; border-radius: 4px;">
+                                <strong style="color: #854d0e; font-size: ${smallFs};">Optimal handelslængde v. nyindkøb:</strong>
+                                <ul style="margin: 1px 0 0 0; padding-left: 14px; line-height: 1.25; color: #713f12;">
+                                    ${benchmarkPrintLines.map(l => `<li>${l}</li>`).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
+
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; font-size: ${miniFs}; background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 3px 6px; border-radius: 4px; color: #166534;">
+                                <div>
+                                    <span style="display: block; opacity: 0.85;">Anvendt træ:</span>
+                                    <strong>${(res.totalUsedStockLength/1000).toFixed(2)} m</strong> (spild: ${res.wastePercentage.toFixed(1)}%)
+                                </div>
+                                <div>
+                                    <span style="display: block; opacity: 0.85;">Sparet v. optimering:</span>
+                                    <strong>${(sust ? sust.savedMetersVsNaive : 0).toFixed(2)} m</strong> mindre afskær
+                                </div>
+                                <div>
+                                    <span style="display: block; opacity: 0.85;">Estimeret CO₂-gevinst:</span>
+                                    <strong>ca. ${(sust ? sust.totalCo2Benefit : 0).toFixed(1)} kg CO₂</strong>
+                                </div>
+                            </div>
                         </div>
                     `
                 });
@@ -2228,7 +2413,7 @@
                                 </div>
                                 <div style="text-align: right; font-size: ${smallFs}; color: #4b5563; flex-shrink: 0;">
                                     <div><strong>Udskrevet:</strong> ${dateStr}</div>
-                                    <div style="font-size: ${miniFs}; color: #9ca3af; margin-top: 1px;">Træoptimerings-App v4.1.0</div>
+                                    <div style="font-size: ${miniFs}; color: #9ca3af; margin-top: 1px;">Træoptimerings-App v4.2.0</div>
                                 </div>
                             </div>
                         </div>
@@ -2646,7 +2831,7 @@
             const projectName = printProjectNameInput.value.trim() || 'trae-projekt';
             const filename = `${projectName.replace(/[^a-z0-9æøå]/gi, '_').toLowerCase()}.json`;
             const projectData = {
-                version: '4.1.1',
+                version: '4.2.0',
                 availableDimensions,
                 requiredPieces,
                 stockLengths,
