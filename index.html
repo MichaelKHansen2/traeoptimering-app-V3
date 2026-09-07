@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Træoptimerings-App v3.9</title>
+    <title>Træoptimerings-App v3.9.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -134,36 +134,26 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            body { padding: 1cm; margin: 0; background-color: white; }
-            .print-hide { display: none !important; }
-            .print-container { display: block !important; width: 100% !important; max-width: 100% !important; box-shadow: none; border: none;}
-            #results-container { box-shadow: none !important; border: none !important; padding: 0 !important; min-height: 0 !important; }
-            #sustainability-report { box-shadow: none !important; border: 1px solid #999 !important; padding: 1rem !important; margin-top: 1.5rem !important; page-break-inside: avoid; }
-            #sustainability-report.hidden { display: none !important; }
-            
-            #print-header {
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            body > *:not(#print-render-zone) {
+                display: none !important;
+            }
+            #print-render-zone {
                 display: block !important;
-                text-align: center;
-                width: 100%;
+                width: 100% !important;
+                background-color: white !important;
+                color: #111827 !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
-
-            .stock-bar { border: 1px solid #000 !important; background-color: #fff !important; }
-            .piece-wrapper { border-right: 1px solid #666 !important; }
-            .piece-segment { color: #000 !important; }
-            .margin-segment {
-                border-left: 1px dashed #666 !important;
-                background-color: #fca5a5 !important;
-            }
-            .margin-input { color: #000 !important; text-shadow: none !important; }
-            .inline-edit, .editable, .margin-input { border: none !important; pointer-events: none; }
-            .waste-segment {
-                background-image: repeating-linear-gradient(45deg, #ccc, #ccc 4px, #fff 4px, #fff 8px) !important;
-                background-color: #fff !important;
-                border-left: 1px solid #666 !important;
-                color: #000 !important;
-            }
-            .page-break-before {
-                page-break-before: always;
+            .print-hide { display: none !important; }
+            .print-avoid-break {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
             }
             svg { display: none !important; }
         }
@@ -173,9 +163,16 @@
 
     <div class="max-w-7xl mx-auto print-container">
         <header class="text-center mb-6 print-hide">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.4</h1>
             <p class="text-gray-600 mt-1 text-sm md:text-base">Mængdeberegning, Deling, Udskrift & Bæredygtighedsanalyse</p>
-            <p id="version-info" class="text-xs text-gray-400 mt-1"></p>
+            <div class="flex items-center justify-center gap-3 mt-1.5 flex-wrap">
+                <span id="version-info" class="text-xs text-gray-400"></span>
+                <span class="text-gray-300">&bull;</span>
+                <div id="auto-save-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="auto-save-text">Kladde automatisk gemt</span>
+                </div>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -187,7 +184,10 @@
                 <div class="panel">
                     <h2 class="text-xl font-semibold text-gray-700 mb-3 flex items-center justify-between">
                         <span>Projektstyring</span>
-                        <span class="text-xs font-normal text-gray-500 bg-gray-100 py-1 px-2 rounded">Auto-gem & del</span>
+                        <div class="flex items-center gap-2">
+                            <button id="reset-draft-btn" type="button" class="text-xs text-gray-500 hover:text-red-600 font-medium hover:underline transition">Nyt tomt projekt</button>
+                            <span class="text-xs font-normal text-gray-500 bg-gray-100 py-1 px-2 rounded">Auto-gem & del</span>
+                        </div>
                     </h2>
                     <div class="space-y-4 text-sm">
                         <div>
@@ -357,6 +357,143 @@
         </div>
     </div>
 
+    <!-- DEDIKERET PRINT ZONE (aktiveres KUN ved udskrift) -->
+    <div id="print-render-zone" class="hidden"></div>
+
+    <!-- PRINT & PDF OPSÆTNINGS MODAL -->
+    <div id="print-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden p-3 md:p-6 print-hide">
+        <div class="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-gray-200">
+            <!-- Modal Header -->
+            <div class="px-6 py-3.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 bg-indigo-100 text-indigo-700 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base md:text-lg font-bold text-gray-900 leading-tight">Print & PDF Opsætning</h3>
+                        <p class="text-xs text-gray-500">Styr papirretning, skalering og vælg hvilket indhold der skal udskrives</p>
+                    </div>
+                </div>
+                <button id="close-print-modal-btn" type="button" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-200 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Modal Content Grid -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-gray-50/50">
+                <!-- Venstre side: Indstillinger (5 kolonner) -->
+                <div class="lg:col-span-5 space-y-4">
+                    <!-- 1. Papir & Retning -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Papirformat & Retning
+                        </h4>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label for="print-opt-orientation" class="block font-medium text-gray-600 mb-1">Papirretning</label>
+                                <select id="print-opt-orientation" class="w-full p-2 rounded border border-gray-300 bg-white font-medium focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="portrait" selected>Stående (Højformat - A4)</option>
+                                    <option value="landscape">Liggende (Tværformat - Anbefalet til bjælker)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="print-opt-size" class="block font-medium text-gray-600 mb-1">Størrelse</label>
+                                <select id="print-opt-size" class="w-full p-2 rounded border border-gray-300 bg-white font-medium focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="A4" selected>A4 (Standard)</option>
+                                    <option value="A3">A3 (Stort format)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Skalering & Kompakthed -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider">Skalering af indhold</h4>
+                            <span id="print-scale-value" class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">100% (Normal)</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 mb-2">Juster for at samle flere bjælker og tabeller på færre sider:</p>
+                        <input type="range" id="print-opt-scale" min="60" max="100" step="5" value="100" class="w-full accent-indigo-600 cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+                            <span>60% (Kompakt)</span>
+                            <span>80%</span>
+                            <span>100% (Original)</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5 mt-2.5">
+                            <button type="button" class="print-scale-btn text-xs py-1 px-2 rounded bg-gray-50 hover:bg-indigo-50 hover:text-indigo-700 border border-gray-200 transition font-medium" data-scale="100">100% Normal</button>
+                            <button type="button" class="print-scale-btn text-xs py-1 px-2 rounded bg-gray-50 hover:bg-indigo-50 hover:text-indigo-700 border border-gray-200 transition font-medium" data-scale="85">85% Kompakt</button>
+                            <button type="button" class="print-scale-btn text-xs py-1 px-2 rounded bg-gray-50 hover:bg-indigo-50 hover:text-indigo-700 border border-gray-200 transition font-medium" data-scale="70">70% Få sider</button>
+                        </div>
+                    </div>
+
+                    <!-- 3. Vælg sektioner på print -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5">Vælg indhold til print</h4>
+                        <div class="space-y-2 text-xs">
+                            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="checkbox" id="print-inc-header" checked class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <span class="font-semibold text-gray-800">Projektnavn & Dato</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="checkbox" id="print-inc-summary" checked class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <span class="font-medium text-gray-700">Samlet Forbrugsoversigt (anvendt træ & spild)</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="checkbox" id="print-inc-plan" checked class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <span class="font-medium text-gray-700">Visuel Skæreplan (farvede bjælker)</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="checkbox" id="print-inc-parts" checked class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <span class="font-semibold text-indigo-800 bg-indigo-50 px-1 rounded">Stykkliste / Savetabel (med [ ] afkrydsning)</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="checkbox" id="print-inc-shopping" checked class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <span class="font-medium text-gray-700">Anbefalet Indkøb & Bæredygtighed</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 4. Noter / Elev / Hold -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <label for="print-notes-input" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Elev / Hold / Noter (vises i toppen)</label>
+                        <input type="text" id="print-notes-input" placeholder="f.eks. Elev: Jens Hansen &bull; Tømrerhold T2" class="w-full text-xs p-2 rounded border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Højre side: Live Forhåndsvisning (7 kolonner) -->
+                <div class="lg:col-span-7 flex flex-col">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-gray-700 uppercase tracking-wider">Live Forhåndsvisning</span>
+                        <span class="text-[11px] text-gray-400">Opdateres automatisk</span>
+                    </div>
+                    <div class="flex-1 bg-gray-200/80 p-3 md:p-4 rounded-xl border border-gray-300 overflow-y-auto max-h-[520px] flex justify-center items-start shadow-inner">
+                        <div id="print-preview-sheet" class="bg-white shadow-xl p-5 md:p-7 rounded text-gray-900 border border-gray-300 text-xs w-full transition-all duration-150">
+                            <!-- Indhold udfyldes dynamisk af JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between flex-wrap gap-2">
+                <div class="text-xs text-gray-500 flex items-center gap-1.5">
+                    <span class="text-emerald-600 font-bold">✓ 100% brudsikker:</span>
+                    <span>Bjælker overskæres aldrig af sideskift.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="cancel-print-btn" type="button" class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-100 transition shadow-sm">Annuller</button>
+                    <button id="execute-print-btn" type="button" class="px-5 py-2 rounded-lg bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-700 shadow-md transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Udskriv / Gem som PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- KONFIGURATION & STANDARDVÆRDIER ---
         const STANDARD_LENGTHS = [2400, 2700, 3000, 3300, 3600, 3900, 4200, 4500, 4800, 5100, 5400];
@@ -373,6 +510,7 @@
         let stockLengths = [];
         let nextPieceId = 1;
         let nextStockId = 1;
+        let latestOptimizationResult = null;
 
         // Normalisering af dimensioner: gør '45×120', ' 45 x 120 ', '45X120' til standard '45x120'
         function normalizeDim(dim) {
@@ -393,6 +531,7 @@
         const deleteProjectBtn = document.getElementById('delete-project-btn');
         const diagnoseStorageBtn = document.getElementById('diagnose-storage-btn');
         const savedCountLabel = document.getElementById('saved-count-label');
+        const resetDraftBtn = document.getElementById('reset-draft-btn');
         const saveFileBtn = document.getElementById('save-file-btn');
         const loadFileBtn = document.getElementById('load-file-btn');
         const fileInput = document.getElementById('file-input');
@@ -416,11 +555,30 @@
         const safetyMarginInput = document.getElementById('safety-margin');
         const currentMarginDisplay = document.getElementById('current-margin-display');
 
+        // Print Modal Element References
+        const printModal = document.getElementById('print-modal');
+        const closePrintModalBtn = document.getElementById('close-print-modal-btn');
+        const cancelPrintBtn = document.getElementById('cancel-print-btn');
+        const executePrintBtn = document.getElementById('execute-print-btn');
+        const printOptOrientation = document.getElementById('print-opt-orientation');
+        const printOptSize = document.getElementById('print-opt-size');
+        const printOptScale = document.getElementById('print-opt-scale');
+        const printScaleValue = document.getElementById('print-scale-value');
+        const printIncHeader = document.getElementById('print-inc-header');
+        const printIncSummary = document.getElementById('print-inc-summary');
+        const printIncPlan = document.getElementById('print-inc-plan');
+        const printIncParts = document.getElementById('print-inc-parts');
+        const printIncShopping = document.getElementById('print-inc-shopping');
+        const printNotesInput = document.getElementById('print-notes-input');
+        const printPreviewSheet = document.getElementById('print-preview-sheet');
+        const printRenderZone = document.getElementById('print-render-zone');
+
         // --- EVENT LISTENERS ---
         saveProjectBtn.addEventListener('click', handleSaveProject);
         loadProjectBtn.addEventListener('click', handleLoadProject);
         deleteProjectBtn.addEventListener('click', handleDeleteProject);
         if (diagnoseStorageBtn) diagnoseStorageBtn.addEventListener('click', handleDiagnoseStorage);
+        if (resetDraftBtn) resetDraftBtn.addEventListener('click', handleResetDraft);
         saveFileBtn.addEventListener('click', handleSaveToFile);
         loadFileBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleLoadFromFile);
@@ -429,11 +587,36 @@
         addPieceForm.addEventListener('submit', handleAddPiece);
         addStockForm.addEventListener('submit', handleAddStock);
         calculateBtnDesktop.addEventListener('click', handleCalculate);
-        printBtnDesktop.addEventListener('click', handlePrint);
+        printBtnDesktop.addEventListener('click', openPrintModal);
+
+        // Print Modal Handlers
+        if (closePrintModalBtn) closePrintModalBtn.addEventListener('click', closePrintModal);
+        if (cancelPrintBtn) cancelPrintBtn.addEventListener('click', closePrintModal);
+        if (executePrintBtn) executePrintBtn.addEventListener('click', executePrint);
+
+        [printOptOrientation, printOptSize, printIncHeader, printIncSummary, printIncPlan, printIncParts, printIncShopping].forEach(el => {
+            if (el) el.addEventListener('change', updatePrintPreview);
+        });
+        if (printOptScale) {
+            printOptScale.addEventListener('input', updatePrintPreview);
+        }
+        if (printNotesInput) {
+            printNotesInput.addEventListener('input', updatePrintPreview);
+        }
+        document.querySelectorAll('.print-scale-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = parseInt(btn.getAttribute('data-scale'));
+                if (printOptScale) {
+                    printOptScale.value = val;
+                    updatePrintPreview();
+                }
+            });
+        });
 
         if (autoSupplementCheckbox) {
             autoSupplementCheckbox.addEventListener('change', () => {
                 triggerAutoCalculate();
+                triggerAutoDraft();
             });
         }
 
@@ -441,16 +624,26 @@
             const val = parseInt(safetyMarginInput.value) || 0;
             currentMarginDisplay.innerText = val + ' mm';
             triggerAutoCalculate();
+            triggerAutoDraft();
+        });
+
+        if (printProjectNameInput) printProjectNameInput.addEventListener('input', triggerAutoDraft);
+        if (projectNameInput) projectNameInput.addEventListener('input', triggerAutoDraft);
+
+        window.addEventListener('beforeunload', saveAutoDraft);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') saveAutoDraft();
         });
 
         // Opdater versionsdato automatisk
-        document.getElementById('version-info').innerHTML = "Version 3.9.3 &bull; Sidst opdateret: " + document.lastModified;
+        document.getElementById('version-info').innerHTML = "Version 3.9.4 &bull; Sidst opdateret: " + document.lastModified;
 
         // --- LIVE BEREGNINGSTRIGGER ---
         function triggerAutoCalculate() {
             if (requiredPieces.length > 0) {
                 handleCalculate();
             } else {
+                latestOptimizationResult = null;
                 resultsContainer.innerHTML = `
                     <div id="results-placeholder" class="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -462,6 +655,7 @@
                 sustainabilityReportContainer.classList.add('hidden');
                 showPrintButtons(false);
             }
+            triggerAutoDraft();
         }
 
         // --- GLOBALE FUNKTIONER TIL LIVE REDIGERING AF EMNER ---
@@ -565,6 +759,7 @@
                 availableDimensions.push(norm);
                 availableDimensions.sort();
                 renderAllLists();
+                triggerAutoDraft();
             }
             input.value = '';
         }
@@ -646,6 +841,7 @@
         function handleCalculate() {
             resultsContainer.innerHTML = '';
             if (requiredPieces.length === 0) {
+                latestOptimizationResult = null;
                 renderError('Tilføj mindst ét ønsket emne i sektion 2.');
                 sustainabilityReportContainer.classList.add('hidden');
                 showPrintButtons(false);
@@ -657,10 +853,15 @@
 
             try {
                 const result = runOptimization(globalMargin, stockLengths, requiredPieces, autoSupplement);
+                latestOptimizationResult = result;
                 renderResults(result);
                 renderSustainabilityReport(result);
                 showPrintButtons(true);
+                if (printModal && !printModal.classList.contains('hidden')) {
+                    updatePrintPreview();
+                }
             } catch (error) {
+                latestOptimizationResult = null;
                 renderError(error.message);
                 sustainabilityReportContainer.classList.add('hidden');
                 showPrintButtons(false);
@@ -1071,41 +1272,454 @@
             printBtnDesktop.classList.toggle('hidden', !show);
         }
 
-        function handlePrint() {
+        // --- AUTO-DRAFT / KLADDE-HUKOMMELSE ---
+        let autoDraftTimeout = null;
+        function triggerAutoDraft() {
+            clearTimeout(autoDraftTimeout);
+            autoDraftTimeout = setTimeout(saveAutoDraft, 250);
+        }
+
+        function saveAutoDraft() {
             try {
-                let printHeader = document.getElementById('print-header');
-                const pName = (printProjectNameInput && printProjectNameInput.value.trim()) || 
-                              (projectNameInput && projectNameInput.value.trim()) || 
-                              'Træoptimerings-Projekt';
-                if (!printHeader) {
-                    printHeader = document.createElement('div');
-                    printHeader.id = 'print-header';
-                    const container = document.getElementById('results-container');
-                    if (container && container.parentNode) {
-                        container.parentNode.insertBefore(printHeader, container);
-                    } else {
-                        document.body.appendChild(printHeader);
-                    }
+                const draft = {
+                    availableDimensions,
+                    requiredPieces,
+                    stockLengths,
+                    safetyMargin: safetyMarginInput ? safetyMarginInput.value : 50,
+                    printProjectName: printProjectNameInput ? printProjectNameInput.value : '',
+                    projectName: projectNameInput ? projectNameInput.value : '',
+                    autoSupplement: autoSupplementCheckbox ? autoSupplementCheckbox.checked : false,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('traeOptApp_autoDraft', JSON.stringify(draft));
+                const statusEl = document.getElementById('auto-save-text');
+                if (statusEl) {
+                    const timeStr = new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+                    statusEl.innerText = `Kladde gemt kl. ${timeStr}`;
                 }
-                const now = new Date().toLocaleDateString('da-DK', {
-                    year: 'numeric', month: 'long', day: 'numeric'
+            } catch(e) {
+                console.warn('Fejl ved gemning af autokladde:', e);
+            }
+        }
+
+        function loadAutoDraft() {
+            try {
+                const raw = localStorage.getItem('traeOptApp_autoDraft');
+                if (!raw) return false;
+                const draft = JSON.parse(raw);
+                if (!draft || typeof draft !== 'object') return false;
+
+                const hasPieces = draft.requiredPieces && draft.requiredPieces.length > 0;
+                const hasCustomDims = draft.availableDimensions && draft.availableDimensions.length > 0;
+                const hasStock = draft.stockLengths && draft.stockLengths.length > 0;
+
+                if (!hasPieces && !hasCustomDims && !hasStock) return false;
+
+                if (draft.availableDimensions) {
+                    availableDimensions = draft.availableDimensions.map(normalizeDim);
+                }
+                
+                const rawPieces = draft.requiredPieces || [];
+                requiredPieces = [];
+                let pId = 1;
+                rawPieces.forEach(p => {
+                    const amt = (p.amount && p.amount > 1) ? parseInt(p.amount) : 1;
+                    for (let i = 0; i < amt; i++) {
+                        requiredPieces.push({
+                            id: pId++,
+                            dimension: normalizeDim(p.dimension),
+                            tag: (p.tag || 'Emne').trim(),
+                            length: parseInt(p.length) || 0,
+                            amount: 1,
+                            customMargin: (p.customMargin !== undefined && p.customMargin !== null) ? parseInt(p.customMargin) : null
+                        });
+                    }
                 });
-                printHeader.innerHTML = `
-                    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 16px;">
-                        <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 4px 0;">${pName}</h1>
-                        <p style="font-size: 13px; color: #555; margin: 0;">Skæreplan & Materialeliste &bull; Udskrevet: ${now}</p>
+                nextPieceId = pId;
+
+                const rawStock = draft.stockLengths || [];
+                stockLengths = [];
+                let sId = 1;
+                rawStock.forEach(s => {
+                    stockLengths.push({
+                        id: sId++,
+                        dimension: normalizeDim(s.dimension),
+                        length: parseInt(s.length) || 0,
+                        amount: parseInt(s.amount) || 1
+                    });
+                });
+                nextStockId = sId;
+
+                if (draft.safetyMargin && safetyMarginInput) {
+                    safetyMarginInput.value = draft.safetyMargin;
+                    if (currentMarginDisplay) currentMarginDisplay.innerText = draft.safetyMargin + ' mm';
+                }
+                if (draft.printProjectName && printProjectNameInput) {
+                    printProjectNameInput.value = draft.printProjectName;
+                }
+                if (draft.projectName && projectNameInput) {
+                    projectNameInput.value = draft.projectName;
+                }
+                if (draft.autoSupplement !== undefined && autoSupplementCheckbox) {
+                    autoSupplementCheckbox.checked = draft.autoSupplement;
+                }
+
+                const statusEl = document.getElementById('auto-save-text');
+                if (statusEl && draft.timestamp) {
+                    const timeStr = new Date(draft.timestamp).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+                    statusEl.innerText = `Kladde gendannet (${timeStr})`;
+                }
+                return true;
+            } catch(e) {
+                console.warn('Fejl ved indlæsning af autokladde:', e);
+                return false;
+            }
+        }
+
+        function handleResetDraft() {
+            if (confirm('Vil du starte et nyt tomt projekt?\n\nDette rydder den aktuelle kladde og nulstiller alle indtastede emner og mål.\n(Tidligere gemte projekter i rullemenuen påvirkes ikke).')) {
+                try { localStorage.removeItem('traeOptApp_autoDraft'); } catch(e){}
+                availableDimensions = ['45x95', '45x120', '45x145'];
+                requiredPieces = [];
+                stockLengths = [];
+                nextPieceId = 1;
+                nextStockId = 1;
+                if (safetyMarginInput) safetyMarginInput.value = 50;
+                if (currentMarginDisplay) currentMarginDisplay.innerText = '50 mm';
+                if (printProjectNameInput) printProjectNameInput.value = '';
+                if (projectNameInput) projectNameInput.value = '';
+                if (autoSupplementCheckbox) autoSupplementCheckbox.checked = false;
+                renderAllLists();
+                triggerAutoCalculate();
+                const statusEl = document.getElementById('auto-save-text');
+                if (statusEl) statusEl.innerText = 'Nyt tomt projekt oprettet';
+            }
+        }
+
+        // --- PRINT LAYOUT MODAL & GENERERING ---
+        function openPrintModal() {
+            if (!latestOptimizationResult || requiredPieces.length === 0) {
+                alert('Tilføj mindst ét emne i sektion 2 for at generere en skæreplan før udskrift.');
+                return;
+            }
+            if (printModal) {
+                printModal.classList.remove('hidden');
+                updatePrintPreview();
+            }
+        }
+
+        function closePrintModal() {
+            if (printModal) {
+                printModal.classList.add('hidden');
+            }
+        }
+
+        function buildPrintContentHTML(res, options) {
+            if (!res || !res.plan) return '<p style="color:#6b7280; font-style:italic;">Ingen optimeringsresultater tilgængelige.</p>';
+            const {
+                incHeader = true,
+                incSummary = true,
+                incPlan = true,
+                incParts = true,
+                incShopping = true,
+                notes = '',
+                projectName = 'Træoptimerings-Projekt',
+                scale = 100
+            } = options;
+
+            const barH = scale < 75 ? '34px' : (scale < 85 ? '42px' : '52px');
+            const dateStr = new Date().toLocaleDateString('da-DK', {
+                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            let html = '';
+
+            // 1. Sideoverskrift
+            if (incHeader) {
+                html += `
+                    <div style="border-bottom: 2px solid #111827; padding-bottom: 8px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 8px;">
+                            <div>
+                                <h1 style="font-size: 20px; font-weight: bold; margin: 0; color: #111827;">${projectName}</h1>
+                                ${notes ? `<p style="font-size: 11px; color: #4b5563; margin: 3px 0 0 0;"><strong>Note / Elev:</strong> ${notes}</p>` : ''}
+                            </div>
+                            <div style="text-align: right; font-size: 10px; color: #6b7280;">
+                                <div>Udskrevet: ${dateStr}</div>
+                                <div>Træoptimerings-App v3.9.4</div>
+                            </div>
+                        </div>
                     </div>
                 `;
-            } catch (err) {
-                console.warn('Fejl ved print-header:', err);
             }
+
+            // 2. Samlet Forbrugsoversigt
+            if (incSummary) {
+                html += `
+                    <div class="print-avoid-break" style="margin-bottom: 12px; padding: 10px 14px; background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 6px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 6px;">
+                            <strong style="font-size: 12px; color: #111827;">Samlet Forbrugsoversigt</strong>
+                            <span style="font-size: 11px; color: #4b5563;">${(res.totalRequiredLength/1000).toFixed(2)} m emner (inkl. tillæg)</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 11px;">
+                            <div>
+                                <span style="color: #6b7280; display: block; font-size: 10px;">Samlet anvendt træ:</span>
+                                <strong style="font-size: 13px; color: #111827;">${(res.totalUsedStockLength/1000).toFixed(2)} m</strong>
+                            </div>
+                            <div>
+                                <span style="color: #6b7280; display: block; font-size: 10px;">Samlet spild:</span>
+                                <strong style="font-size: 13px; color: ${res.wastePercentage > 15 ? '#b45309' : '#15803d'};">
+                                    ${(res.totalWaste/1000).toFixed(2)} m (${res.wastePercentage.toFixed(1)}%)
+                                </strong>
+                            </div>
+                            <div>
+                                <span style="color: #6b7280; display: block; font-size: 10px;">Udnyttelsesgrad:</span>
+                                <strong style="font-size: 13px; color: #15803d;">${(100 - res.wastePercentage).toFixed(1)}%</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 3. Visuel Skæreplan (med print-avoid-break)
+            if (incPlan) {
+                html += `<div style="margin-bottom: 12px;">`;
+                const sortedDimensions = Object.keys(res.plan).sort();
+                for (const dim of sortedDimensions) {
+                    const dimPlan = res.plan[dim];
+                    if (dimPlan.length === 0) continue;
+                    let totalPieces = 0;
+                    dimPlan.forEach(s => { totalPieces += s.pieces.length; });
+
+                    html += `
+                        <div class="print-avoid-break" style="margin-bottom: 10px; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #f3f4f6; padding-bottom: 3px;">
+                                <span style="font-size: 12px; font-weight: bold; color: #111827;">${dim}</span>
+                                <span style="font-size: 10px; color: #3730a3; background: #eef2ff; padding: 1px 6px; border-radius: 4px; font-weight: 600;">
+                                    ${totalPieces} emner &bull; ${dimPlan.length} brædder
+                                </span>
+                            </div>
+                    `;
+
+                    dimPlan.forEach((stock, i) => {
+                        html += `
+                            <div class="print-avoid-break" style="margin-top: 6px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #4b5563; margin-bottom: 2px;">
+                                    <span><strong>Bræt #${i+1}</strong> (${stock.originalLength} mm) ${stock.isStock ? '<span style="color:#1d4ed8; font-weight:600;">[Eget lager]</span>' : '<span style="color:#047857; font-weight:600;">[Handelslængde]</span>'}</span>
+                                    <span>Restspild: <strong>${stock.waste} mm</strong></span>
+                                </div>
+                                <div class="stock-bar" style="display: flex; height: ${barH}; border: 1px solid #4b5563; border-radius: 3px; overflow: hidden; background: #f3f4f6;">
+                        `;
+
+                        stock.pieces.forEach(p => {
+                            const w = (p.cutLength / stock.originalLength) * 100;
+                            const netW = (p.exactLength / p.cutLength) * 100;
+                            const margW = (p.margin / p.cutLength) * 100;
+                            const color = pieceColors[p.id % pieceColors.length];
+
+                            html += `
+                                <div style="display: flex; height: 100%; width: ${w}%; background: ${color}; border-right: 1px solid #374151; box-sizing: border-box; position: relative;">
+                                    <div style="width: ${netW}%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; line-height: 1.1; overflow: hidden; padding: 1px;">
+                                        <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; color: #111;">${p.tag}</strong>
+                                        <span style="font-family: monospace; font-size: 8.5px; color: #111;">${p.exactLength}mm</span>
+                                    </div>
+                                    ${p.margin > 0 ? `
+                                    <div style="width: ${margW}%; background: rgba(239, 68, 68, 0.25); border-left: 1px dashed rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: #991b1b;">
+                                        ${p.margin}
+                                    </div>` : ''}
+                                </div>
+                            `;
+                        });
+
+                        if (stock.waste > 0) {
+                            const wasteW = (stock.waste / stock.originalLength) * 100;
+                            html += `
+                                <div style="width: ${wasteW}%; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #4b5563; background: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 5px, #f3f4f6 5px, #f3f4f6 10px);">
+                                    Spild ${stock.waste}mm
+                                </div>
+                            `;
+                        }
+
+                        html += `</div></div>`;
+                    });
+
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            }
+
+            // 4. Stykkliste / Afkorterliste (med afkrydsningsfelter)
+            if (incParts) {
+                let itemNum = 1;
+                let rows = '';
+                const sortedDimensions = Object.keys(res.plan).sort();
+                for (const dim of sortedDimensions) {
+                    const dimPlan = res.plan[dim];
+                    dimPlan.forEach((board, bIdx) => {
+                        board.pieces.forEach(p => {
+                            rows += `
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 4px 6px; text-align: center; border-right: 1px solid #e5e7eb; font-family: monospace; font-size: 11px; color: #374151;">[ ]</td>
+                                    <td style="padding: 4px 6px; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${itemNum++}. ${p.tag}</td>
+                                    <td style="padding: 4px 6px; border-right: 1px solid #e5e7eb; font-family: monospace;">${dim}</td>
+                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">${p.exactLength} mm</td>
+                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb; color: #dc2626;">+${p.margin} mm</td>
+                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${p.cutLength} mm</td>
+                                    <td style="padding: 4px 6px; text-align: center; color: #4b5563;">Bræt #${bIdx + 1} (${board.originalLength}mm)</td>
+                                </tr>
+                            `;
+                        });
+                    });
+                }
+
+                html += `
+                    <div class="print-avoid-break" style="margin-bottom: 12px; margin-top: 6px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #374151; padding-bottom: 3px; margin-bottom: 5px;">
+                            <strong style="font-size: 11px; text-transform: uppercase; color: #111827;">Stykkliste / Afkorterliste</strong>
+                            <span style="font-size: 9.5px; color: #6b7280;">Brug [ ] til at afkrydse ved saven</span>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; border: 1px solid #d1d5db;">
+                            <thead>
+                                <tr style="background-color: #f3f4f6; border-bottom: 1px solid #9ca3af; text-align: left;">
+                                    <th style="padding: 4px 6px; text-align: center; width: 30px; border-right: 1px solid #e5e7eb;">[✓]</th>
+                                    <th style="padding: 4px 6px; border-right: 1px solid #e5e7eb;">Emne / Mærkning</th>
+                                    <th style="padding: 4px 6px; border-right: 1px solid #e5e7eb;">Dimension</th>
+                                    <th style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">Nettomål</th>
+                                    <th style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">Tillæg</th>
+                                    <th style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">Skærelængde</th>
+                                    <th style="padding: 4px 6px; text-align: center;">Placeret på</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            // 5. Indkøb & Bæredygtighed
+            if (incShopping) {
+                let shoppingItems = [];
+                for (const dim in res.shoppingList) {
+                    const lengths = res.shoppingList[dim];
+                    const items = [];
+                    for (const len in lengths) {
+                        if (lengths[len] > 0) items.push(`${lengths[len]} stk. á ${len} mm`);
+                    }
+                    if (items.length > 0) {
+                        shoppingItems.push(`<strong>${dim}:</strong> ${items.join(', ')}`);
+                    }
+                }
+
+                html += `
+                    <div class="print-avoid-break" style="margin-bottom: 10px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background-color: #f9fafb; font-size: 10px;">
+                        <strong style="font-size: 11px; color: #111827; display: block; margin-bottom: 4px;">Anbefalet Indkøb (Tømmerhandel):</strong>
+                        ${shoppingItems.length > 0 
+                            ? `<ul style="margin: 0; padding-left: 18px; line-height: 1.4;">${shoppingItems.map(i => `<li>${i}</li>`).join('')}</ul>` 
+                            : '<p style="margin: 0; color: #1d4ed8;">Alt dækket af eget lager (ingen nye indkøb nødvendige).</p>'}
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        function updatePrintPreview() {
+            if (!latestOptimizationResult) return;
+            const orientation = printOptOrientation ? printOptOrientation.value : 'portrait';
+            const size = printOptSize ? printOptSize.value : 'A4';
+            const scale = printOptScale ? parseInt(printOptScale.value) || 100 : 100;
+            const incHeader = printIncHeader ? printIncHeader.checked : true;
+            const incSummary = printIncSummary ? printIncSummary.checked : true;
+            const incPlan = printIncPlan ? printIncPlan.checked : true;
+            const incParts = printIncParts ? printIncParts.checked : true;
+            const incShopping = printIncShopping ? printIncShopping.checked : true;
+            const notes = printNotesInput ? printNotesInput.value.trim() : '';
+            const projectName = (printProjectNameInput && printProjectNameInput.value.trim()) || 
+                                (projectNameInput && projectNameInput.value.trim()) || 
+                                'Træoptimerings-Projekt';
+
+            if (printScaleValue) {
+                printScaleValue.innerText = `${scale}% (${scale >= 95 ? 'Normal' : scale >= 80 ? 'Kompakt' : 'Få sider'})`;
+            }
+
+            const html = buildPrintContentHTML(latestOptimizationResult, {
+                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation
+            });
+
+            if (printPreviewSheet) {
+                printPreviewSheet.innerHTML = html;
+                printPreviewSheet.style.maxWidth = orientation === 'landscape' ? '100%' : '560px';
+                printPreviewSheet.style.zoom = String((scale / 100) * 0.95);
+            }
+        }
+
+        function executePrint() {
+            if (!latestOptimizationResult) {
+                alert('Ingen optimeringsresultater at udskrive.');
+                return;
+            }
+            const orientation = printOptOrientation ? printOptOrientation.value : 'portrait';
+            const size = printOptSize ? printOptSize.value : 'A4';
+            const scale = printOptScale ? parseInt(printOptScale.value) || 100 : 100;
+            const incHeader = printIncHeader ? printIncHeader.checked : true;
+            const incSummary = printIncSummary ? printIncSummary.checked : true;
+            const incPlan = printIncPlan ? printIncPlan.checked : true;
+            const incParts = printIncParts ? printIncParts.checked : true;
+            const incShopping = printIncShopping ? printIncShopping.checked : true;
+            const notes = printNotesInput ? printNotesInput.value.trim() : '';
+            const projectName = (printProjectNameInput && printProjectNameInput.value.trim()) || 
+                                (projectNameInput && projectNameInput.value.trim()) || 
+                                'Træoptimerings-Projekt';
+
+            const html = buildPrintContentHTML(latestOptimizationResult, {
+                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation
+            });
+
+            if (printRenderZone) {
+                printRenderZone.innerHTML = html;
+            }
+
+            let dynamicStyle = document.getElementById('print-dynamic-style');
+            if (!dynamicStyle) {
+                dynamicStyle = document.createElement('style');
+                dynamicStyle.id = 'print-dynamic-style';
+                document.head.appendChild(dynamicStyle);
+            }
+
+            const barH = scale < 75 ? '34px' : (scale < 85 ? '42px' : '52px');
+            dynamicStyle.innerHTML = `
+                @media print {
+                    @page {
+                        size: ${size} ${orientation};
+                        margin: 8mm;
+                    }
+                    body > *:not(#print-render-zone) {
+                        display: none !important;
+                    }
+                    #print-render-zone {
+                        display: block !important;
+                        width: 100% !important;
+                        zoom: ${scale / 100};
+                        background: white !important;
+                        color: #111827 !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    .stock-bar {
+                        height: ${barH} !important;
+                    }
+                    .print-avoid-break {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                    }
+                }
+            `;
 
             try {
                 window.focus();
                 window.print();
-            } catch (err) {
-                console.error('Print fejl:', err);
-                alert('Kunne ikke åbne printerdialogen automatisk.');
+            } catch(e) {
+                console.error('Print fejl:', e);
+                alert('Kunne ikke åbne udskriftsdialogen automatisk.');
             }
         }
 
@@ -1392,9 +2006,17 @@
             availableDimensions = availableDimensions.map(normalizeDim);
             populateStandardLengthsDropdown();
             populateProjectsDropdown();
+
+            // Forsøg at gendanne auto-kladde hvis siden genindlæses eller brugeren vender tilbage
+            const restored = loadAutoDraft();
+
             renderAllLists();
             const marginVal = parseInt(safetyMarginInput.value) || 50;
             currentMarginDisplay.innerText = marginVal + ' mm';
+
+            if (restored && requiredPieces.length > 0) {
+                triggerAutoCalculate();
+            }
         }
 
         init();
