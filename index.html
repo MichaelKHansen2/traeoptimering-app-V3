@@ -3,46 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Træoptimerings-App v3.8</title>
+    <title>Træoptimerings-App v3.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles to complement Tailwind */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Tailwind gray-100 */
+            background-color: #f3f4f6;
         }
         .panel {
             background-color: white;
-            border-radius: 0.75rem; /* rounded-xl */
-            padding: 1.5rem; /* p-6 */
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
         .stock-bar {
             display: flex;
-            height: 60px; /* Gjort lidt højere for at få plads til inputs */
-            border: 1px solid #d1d5db; /* border-gray-300 */
-            border-radius: 0.375rem; /* rounded-md */
+            height: 64px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
             overflow: hidden;
-            background-color: #e5e7eb; /* gray-200 */
+            background-color: #e5e7eb;
         }
         .piece-wrapper {
             display: flex;
             height: 100%;
             border-right: 2px solid white;
             box-sizing: border-box;
+            position: relative;
         }
         .piece-segment {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 0.25rem;
+            padding: 0.2rem;
             color: #1f2937;
-            line-height: 1.2;
+            line-height: 1.15;
             overflow: hidden;
+            flex-grow: 1;
         }
         
         .margin-segment {
@@ -50,9 +51,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-color: rgba(239, 68, 68, 0.15); /* Svag rød for at markere at det skæres væk */
-            border-left: 1px dashed rgba(255,255,255,0.6);
-            position: relative; /* Gør at inputtet kan centreres præcist */
+            background-color: rgba(239, 68, 68, 0.18);
+            border-left: 1px dashed rgba(255,255,255,0.7);
+            position: relative;
         }
         .margin-input {
             background: transparent;
@@ -60,20 +61,20 @@
             text-align: center;
             font-size: 0.75rem;
             font-weight: bold;
-            width: 32px; /* Fast bredde så man altid kan klikke på det */
-            position: absolute; /* Løfter teksten ud af den smalle boks */
+            width: 34px;
+            position: absolute;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
             cursor: pointer;
             outline: none;
-            color: #b91c1c; /* Mørkerød tekst */
+            color: #b91c1c;
             text-shadow: 1px 1px 0px rgba(255,255,255,0.9), -1px -1px 0px rgba(255,255,255,0.9), 1px -1px 0px rgba(255,255,255,0.9), -1px 1px 0px rgba(255,255,255,0.9);
-            z-index: 1; /* Sat ned til 1 så den ikke ligger over sticky knapper */
+            z-index: 1;
         }
         .margin-input:focus {
             border-bottom: 1px solid #b91c1c;
-            background: rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.95);
             text-shadow: none;
             z-index: 2;
         }
@@ -83,15 +84,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem; /* text-xs */
-            color: #4b5563; /* gray-600 */
-            background-color: #f3f4f6; /* gray-100 */
+            font-size: 0.75rem;
+            color: #4b5563;
+            background-color: #f3f4f6;
             background-image: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 10px, #f3f4f6 10px, #f3f4f6 20px);
             line-height: 1.2;
             overflow: hidden;
         }
         
-        /* Inline input felter i liste og visualisering */
+        /* Inline redigerbare felter */
         .inline-edit, .editable {
             background: transparent;
             border: none;
@@ -106,11 +107,11 @@
             transition: all 0.2s;
         }
         .inline-edit:focus, .editable:focus {
-            border-bottom: 1px solid rgba(0,0,0,0.8);
-            background: rgba(255,255,255,0.4);
+            border-bottom: 1px solid rgba(0,0,0,0.85);
+            background: rgba(255,255,255,0.8);
             cursor: text;
         }
-        /* Skjul browserens indbyggede op/ned pile for tal-inputs */
+        /* Skjul browservisning af spin-pile */
         .inline-edit::-webkit-outer-spin-button,
         .inline-edit::-webkit-inner-spin-button,
         .editable::-webkit-outer-spin-button,
@@ -124,7 +125,7 @@
             -moz-appearance: textfield;
         }
 
-        /* Print-specific styles */
+        /* Print-specifikke styles */
         @media print {
             * {
                 -webkit-print-color-adjust: exact !important;
@@ -148,9 +149,7 @@
 
             .stock-bar { border: 1px solid #000 !important; background-color: #fff !important; }
             .piece-wrapper { border-right: 1px solid #666 !important; }
-            .piece-segment {
-                color: #000 !important;
-            }
+            .piece-segment { color: #000 !important; }
             .margin-segment {
                 border-left: 1px dashed #666 !important;
                 background-color: #fca5a5 !important;
@@ -166,158 +165,217 @@
             .page-break-before {
                 page-break-before: always;
             }
-            svg { display: none !important; } /* Skjul blyanter på print */
+            svg { display: none !important; }
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-3 md:p-6 text-gray-800">
 
     <div class="max-w-7xl mx-auto print-container">
-        <header class="text-center mb-8 print-hide">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Træoptimerings-App v3.8</h1>
-            <p class="text-gray-600 mt-2">Med Deling, Udskrift, Indkøbs- og Bæredygtighedsanalyse</p>
+        <header class="text-center mb-6 print-hide">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9</h1>
+            <p class="text-gray-600 mt-1 text-sm md:text-base">Mængdeberegning, Deling, Udskrift & Bæredygtighedsanalyse</p>
             <p id="version-info" class="text-xs text-gray-400 mt-1"></p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
+            <!-- Venstre kolonne: Input & Styring -->
             <div class="flex flex-col gap-6 print-hide">
+                
+                <!-- Projektstyring -->
                 <div class="panel">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Projektstyring</h2>
-                    <div class="space-y-4">
-                         <div>
-                            <label for="print-project-name" class="block text-sm font-medium text-gray-700">Projektnavn (til udskrift)</label>
-                            <input type="text" id="print-project-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="f.eks. Legehus til haven">
-                        </div>
-                        <hr>
-                        <h3 class="text-md font-semibold text-gray-600 pt-2">Lokal Browser-lagring</h3>
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3 flex items-center justify-between">
+                        <span>Projektstyring</span>
+                        <span class="text-xs font-normal text-gray-500 bg-gray-100 py-1 px-2 rounded">Auto-gem & del</span>
+                    </h2>
+                    <div class="space-y-4 text-sm">
                         <div>
-                            <label for="project-name" class="block text-sm font-medium text-gray-700">Gem Nuværende Projekt Som</label>
-                            <div class="flex gap-2 mt-1">
-                                <input type="text" id="project-name" class="flex-grow block w-full rounded-md border-gray-300 shadow-sm" placeholder="f.eks. Carport Tag">
-                                <button id="save-project-btn" class="rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700">Gem</button>
+                            <label for="print-project-name" class="block font-medium text-gray-700">Projektnavn (vises på udskrift)</label>
+                            <input type="text" id="print-project-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2 border" placeholder="f.eks. Kel med vindue - Model 1">
+                        </div>
+                        <hr class="border-gray-200">
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Lokal Browser-lagring</h3>
+                            <div class="flex gap-2">
+                                <input type="text" id="project-name" class="flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2 border" placeholder="Projektnavn til at gemme">
+                                <button id="save-project-btn" class="rounded-md bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition">Gem</button>
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <select id="saved-projects-select" class="flex-grow rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm p-2 border"></select>
+                                <button id="load-project-btn" class="rounded-md bg-green-600 py-2 px-3 text-sm font-medium text-white shadow-sm hover:bg-green-700 transition">Indlæs</button>
+                                <button id="delete-project-btn" class="rounded-md bg-red-600 py-2 px-3 text-sm font-medium text-white shadow-sm hover:bg-red-700 transition">Slet</button>
                             </div>
                         </div>
+                        <hr class="border-gray-200">
                         <div>
-                            <label for="saved-projects-select" class="block text-sm font-medium text-gray-700">Indlæs Gemt Projekt</label>
-                            <div class="flex gap-2 mt-1">
-                                <select id="saved-projects-select" class="flex-grow block w-full rounded-md border-gray-300 shadow-sm"></select>
-                                <button id="load-project-btn" class="rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700">Indlæs</button>
-                                <button id="delete-project-btn" class="rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700">Slet</button>
+                            <h3 class="font-semibold text-gray-700 mb-2">Fysisk Fil (Deling til Moodle / klassekammerat)</h3>
+                            <div class="flex gap-2">
+                                <button id="save-file-btn" class="flex-1 rounded-md bg-gray-700 py-2 px-3 text-sm font-medium text-white shadow-sm hover:bg-gray-800 transition">Gem til Fil (.json)</button>
+                                <button id="load-file-btn" class="flex-1 rounded-md bg-gray-700 py-2 px-3 text-sm font-medium text-white shadow-sm hover:bg-gray-800 transition">Indlæs fra Fil</button>
+                                <input type="file" id="file-input" class="hidden" accept=".json,application/json">
                             </div>
-                        </div>
-                        <hr>
-                        <h3 class="text-md font-semibold text-gray-600 pt-2">Fysisk Fil (Deling)</h3>
-                        <div class="flex gap-2">
-                            <button id="save-file-btn" class="flex-1 rounded-md border border-transparent bg-gray-700 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-800">Gem til Fil</button>
-                            <button id="load-file-btn" class="flex-1 rounded-md border border-transparent bg-gray-700 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-800">Indlæs fra Fil</button>
-                            <input type="file" id="file-input" class="hidden" accept=".json,application/json">
                         </div>
                     </div>
                 </div>
 
+                <!-- 1. Trædimensioner -->
                 <div class="panel">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4">1. Trædimensioner</h2>
-                    <form id="add-dimension-form" class="flex gap-4 items-end">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">1. Trædimensioner</h2>
+                    <form id="add-dimension-form" class="flex gap-2 items-end">
                         <div class="flex-grow">
-                            <label for="dimension-name" class="block text-sm font-medium text-gray-700">Ny dimension</label>
-                            <input type="text" id="dimension-name" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Skriv her (f.eks. 45x195)">
+                            <label for="dimension-name" class="block text-xs font-medium text-gray-600 mb-1">Ny dimension (f.eks. 45x120 el. 45x195)</label>
+                            <input type="text" id="dimension-name" name="name" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500 text-sm p-2 border" placeholder="45x120">
                         </div>
-                        <button type="submit" class="h-10 justify-center rounded-md border border-transparent bg-gray-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-700">Tilføj</button>
+                        <button type="submit" class="h-9 rounded-md bg-gray-700 py-1.5 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-800 transition">Tilføj</button>
                     </form>
-                    <div id="dimensions-list" class="mt-6 space-y-2"></div>
+                    <div id="dimensions-list" class="mt-4 flex flex-wrap gap-2"></div>
                 </div>
 
+                <!-- 2. Ønsket Emner -->
                 <div class="panel">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4">2. Ønsket Emner</h2>
-                    <form id="add-piece-form" class="grid grid-cols-1 sm:grid-cols-6 gap-4 items-end">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-xl font-semibold text-gray-700">2. Ønsket Emner</h2>
+                        <span class="text-xs text-indigo-600 bg-indigo-50 py-1 px-2 rounded-full font-medium">Tal kan rettes direkte i listen</span>
+                    </div>
+                    <form id="add-piece-form" class="grid grid-cols-1 sm:grid-cols-6 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-gray-200">
                         <div class="sm:col-span-2">
-                            <label for="piece-dimension-select" class="block text-sm font-medium text-gray-700">Dimension</label>
-                            <select id="piece-dimension-select" name="dimension" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
+                            <label for="piece-dimension-select" class="block text-xs font-medium text-gray-600 mb-1">Dimension</label>
+                            <select id="piece-dimension-select" name="dimension" class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"></select>
                         </div>
-                         <div class="sm:col-span-2">
-                            <label for="piece-tag" class="block text-sm font-medium text-gray-700">Emne</label>
-                            <input type="text" id="piece-tag" name="tag" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="f.eks. Spær">
-                        </div>
-                        <div>
-                            <label for="piece-length" class="block text-sm font-medium text-gray-700">Længde (mm)</label>
-                            <input type="number" id="piece-length" name="length" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="2400">
+                        <div class="sm:col-span-2">
+                            <label for="piece-tag" class="block text-xs font-medium text-gray-600 mb-1">Emne (navn)</label>
+                            <input type="text" id="piece-tag" name="tag" class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border" placeholder="f.eks. Spær">
                         </div>
                         <div>
-                            <label for="piece-amount" class="block text-sm font-medium text-gray-700">Antal</label>
-                            <input type="number" id="piece-amount" name="amount" value="1" min="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <label for="piece-length" class="block text-xs font-medium text-gray-600 mb-1">Længde (mm)</label>
+                            <input type="number" id="piece-length" name="length" required class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border" placeholder="1567">
+                        </div>
+                        <div>
+                            <label for="piece-amount" class="block text-xs font-medium text-gray-600 mb-1">Antal</label>
+                            <input type="number" id="piece-amount" name="amount" value="1" min="1" required class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border">
                         </div>
                         <div class="sm:col-span-6">
-                             <button type="submit" class="w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Tilføj Emne</button>
+                            <button type="submit" class="w-full rounded-md bg-indigo-600 py-2 px-4 text-sm font-semibold text-white shadow hover:bg-indigo-700 transition">Tilføj Emne</button>
                         </div>
                     </form>
-                    <div id="pieces-list" class="mt-6 space-y-2"></div>
+                    <div id="pieces-list" class="mt-4 space-y-2"></div>
                 </div>
 
+                <!-- 3. Lagerlængder -->
                 <div class="panel">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4">3. Lagerlængder (Dit nuværende lager)</h2>
-                    <form id="add-stock-form" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-xl font-semibold text-gray-700">3. Lagerlængder</h2>
+                        <span class="text-xs text-gray-500 italic">Valgfrit</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">
+                        Hvis du <strong>ikke</strong> tilføjer lager her, beregner appen automatisk det mest optimale indkøb af standard handelslængder (2,4 – 5,4 m).
+                    </p>
+
+                    <form id="add-stock-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-gray-200">
                         <div class="sm:col-span-2">
-                            <label for="stock-dimension-select" class="block text-sm font-medium text-gray-700">Dimension</label>
-                             <select id="stock-dimension-select" name="dimension" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
+                            <label for="stock-dimension-select" class="block text-xs font-medium text-gray-600 mb-1">Dimension</label>
+                            <select id="stock-dimension-select" name="dimension" class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"></select>
                         </div>
                         <div>
-                            <label for="stock-length-select" class="block text-sm font-medium text-gray-700">Standardlængde</label>
-                            <select id="stock-length-select" name="length" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
+                            <label for="stock-length-select" class="block text-xs font-medium text-gray-600 mb-1">Længde</label>
+                            <select id="stock-length-select" name="length" required class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"></select>
                         </div>
                         <div>
-                            <label for="stock-amount" class="block text-sm font-medium text-gray-700">Antal</label>
-                            <input type="number" id="stock-amount" name="amount" value="1" min="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <label for="stock-amount" class="block text-xs font-medium text-gray-600 mb-1">Antal</label>
+                            <input type="number" id="stock-amount" name="amount" value="1" min="1" required class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border">
                         </div>
                         <div class="sm:col-span-4">
-                            <button type="submit" class="w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Tilføj Lagerlængde</button>
+                            <button type="submit" class="w-full rounded-md bg-indigo-600 py-2 px-4 text-sm font-semibold text-white shadow hover:bg-indigo-700 transition">Tilføj til Lager</button>
                         </div>
                     </form>
-                    <div id="stock-list" class="mt-6 space-y-2"></div>
+
+                    <div class="mt-3">
+                        <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                            <input type="checkbox" id="auto-supplement-checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span>Suppler automatisk med standardlængder (2,4 - 5,4m), hvis eget lager slipper op</span>
+                        </label>
+                    </div>
+
+                    <div id="stock-list" class="mt-4 space-y-2"></div>
                 </div>
 
+                <!-- 4. Indstillinger (Standard) -->
                 <div class="panel">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4">4. Indstillinger (Standard)</h2>
+                    <h2 class="text-xl font-semibold text-gray-700 mb-2">4. Indstillinger</h2>
                     <div>
-                        <label for="safety-margin" class="block text-sm font-medium text-gray-700">Standard Ekstra (mm)</label>
-                        <p class="text-xs text-gray-500 mb-1">Lægges til hvert emne for at sikre plads til snit. Kan overskrives pr. emne i skæreplanen.</p>
-                        <input type="number" id="safety-margin" value="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="safety-margin" class="block text-sm font-medium text-gray-700">Standard Ekstra pr. emne (mm)</label>
+                            <span class="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded font-mono font-semibold" id="current-margin-display">50 mm</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2">Lægges til hvert emne for at sikre plads til snit og enderensning. Beregningen opdaterer live, når tallet ændres.</p>
+                        <input type="number" id="safety-margin" value="50" min="0" step="5" class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border focus:ring-green-500 focus:border-green-500">
                     </div>
                 </div>
             </div>
 
+            <!-- Højre kolonne: Beregn, Resultater & Bæredygtighed -->
             <div class="flex flex-col gap-6">
-                <div class="sticky top-8 z-50 print-hide">
-                     <button id="calculate-btn-desktop" class="w-full justify-center rounded-lg border border-transparent bg-green-600 py-4 px-6 text-lg font-bold text-white shadow-lg hover:bg-green-700 transition-transform transform hover:scale-105">Beregn Optimering</button>
-                     <button id="print-btn-desktop" class="hidden mt-4 w-full justify-center items-center gap-2 rounded-lg border border-gray-400 bg-white py-3 px-6 text-base font-bold text-gray-700 shadow-md hover:bg-gray-100">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                         Print Skæreplan
+                
+                <div class="sticky top-4 z-40 print-hide flex flex-col gap-2">
+                    <button id="calculate-btn-desktop" class="w-full flex justify-center items-center gap-2 rounded-lg bg-green-600 py-3.5 px-6 text-lg font-bold text-white shadow-lg hover:bg-green-700 transition transform active:scale-98">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Beregn Optimering
+                    </button>
+                    <button id="print-btn-desktop" class="hidden w-full flex justify-center items-center gap-2 rounded-lg border border-gray-300 bg-white py-2.5 px-6 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Print Skæreplan & Materialeliste
                     </button>
                 </div>
+
+                <!-- Resultat-visning -->
                 <div id="results-container" class="panel min-h-[300px]">
-                     <div id="print-header" class="hidden"></div>
-                     <div id="results-placeholder" class="flex flex-col items-center justify-center h-full text-center text-gray-500">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                         <p class="mt-4 font-semibold">Resultaterne vil blive vist her.</p>
-                         <p class="text-sm">Indtast data og tryk på 'Beregn Optimering'.</p>
-                     </div>
-                </div>
-                <div id="sustainability-report" class="panel hidden print-hide">
+                    <div id="print-header" class="hidden"></div>
+                    <div id="results-placeholder" class="flex flex-col items-center justify-center py-12 text-center text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="font-semibold text-gray-700">Ingen beregning endnu</p>
+                        <p class="text-sm text-gray-500 max-w-sm mt-1">Tilføj dine ønskede emner i sektion 2. Appen beregner automatisk den bedste skæreplan og indkøb.</p>
                     </div>
+                </div>
+
+                <!-- Indkøbs- & Bæredygtighedsrapport -->
+                <div id="sustainability-report" class="panel hidden print-hide"></div>
             </div>
         </div>
     </div>
-<script>
+
+    <script>
+        // --- KONFIGURATION & STANDARDVÆRDIER ---
+        const STANDARD_LENGTHS = [2400, 2700, 3000, 3300, 3600, 3900, 4200, 4500, 4800, 5100, 5400];
+        const STORAGE_KEY = 'traeOptAppProjects_v3';
+
+        // Palette med afdæmpede, letgenkendelige farver til emner
+        const pieceColors = ['#a5b4fc', '#f9a8d4', '#86efac', '#fcd34d', '#7dd3fc', '#c4b5fd', '#fca5a5', '#6ee7b7', '#fdba74', '#67e8f9'];
+
+        const svgPencil = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-gray-400 inline-block ml-1 opacity-70 group-hover:opacity-100 cursor-pointer pointer-events-none flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>`;
+
         // --- STATE MANAGEMENT ---
         let availableDimensions = ['45x95', '45x120', '45x145'];
         let requiredPieces = [];
         let stockLengths = [];
-        let nextPieceId = 0;
-        let nextStockId = 0;
-        const STORAGE_KEY = 'traeOptAppProjects';
+        let nextPieceId = 1;
+        let nextStockId = 1;
 
-        // Genanvendeligt blyant-ikon SVG
-        const svgPencil = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3 text-gray-400 inline-block ml-1 group-hover:text-gray-700 cursor-pointer pointer-events-none flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>`;
+        // Normalisering af dimensioner: gør '45×120', ' 45 x 120 ', '45X120' til standard '45x120'
+        function normalizeDim(dim) {
+            if (!dim) return '';
+            return dim.toString()
+                .trim()
+                .toLowerCase()
+                .replace(/[\s\u00A0]+/g, '')
+                .replace(/[×\*]/g, 'x');
+        }
 
         // --- DOM ELEMENT REFERENCES ---
         const printProjectNameInput = document.getElementById('print-project-name');
@@ -335,6 +393,7 @@
         const pieceDimensionSelect = document.getElementById('piece-dimension-select');
         const stockDimensionSelect = document.getElementById('stock-dimension-select');
         const stockLengthSelect = document.getElementById('stock-length-select');
+        const autoSupplementCheckbox = document.getElementById('auto-supplement-checkbox');
         
         const addPieceForm = document.getElementById('add-piece-form');
         const piecesListContainer = document.getElementById('pieces-list');
@@ -346,6 +405,7 @@
         const resultsContainer = document.getElementById('results-container');
         const sustainabilityReportContainer = document.getElementById('sustainability-report');
         const safetyMarginInput = document.getElementById('safety-margin');
+        const currentMarginDisplay = document.getElementById('current-margin-display');
 
         // --- EVENT LISTENERS ---
         saveProjectBtn.addEventListener('click', handleSaveProject);
@@ -361,26 +421,42 @@
         calculateBtnDesktop.addEventListener('click', handleCalculate);
         printBtnDesktop.addEventListener('click', handlePrint);
 
-        // Opdater versionsdato i toppen automatisk
+        if (autoSupplementCheckbox) {
+            autoSupplementCheckbox.addEventListener('change', () => {
+                triggerAutoCalculate();
+            });
+        }
+
+        safetyMarginInput.addEventListener('input', () => {
+            const val = parseInt(safetyMarginInput.value) || 0;
+            currentMarginDisplay.innerText = val + ' mm';
+            triggerAutoCalculate();
+        });
+
+        // Opdater versionsdato automatisk
         document.getElementById('version-info').innerText = "Sidst opdateret: " + document.lastModified;
 
-        // --- COLOR PALETTE ---
-        const pieceColors = ['#a5b4fc', '#f9a8d4', '#86efac', '#fcd34d', '#7dd3fc', '#c4b5fd', '#fca5a5', '#6ee7b7', '#fdba74', '#67e8f9'];
+        // --- LIVE BEREGNINGSTRIGGER ---
+        function triggerAutoCalculate() {
+            if (requiredPieces.length > 0) {
+                handleCalculate();
+            } else {
+                resultsContainer.innerHTML = `
+                    <div id="print-header" class="hidden"></div>
+                    <div id="results-placeholder" class="flex flex-col items-center justify-center py-12 text-center text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="font-semibold text-gray-700">Ingen beregning endnu</p>
+                        <p class="text-sm text-gray-500 max-w-sm mt-1">Tilføj dine ønskede emner i sektion 2. Appen beregner automatisk den bedste skæreplan og indkøb.</p>
+                    </div>`;
+                sustainabilityReportContainer.classList.add('hidden');
+                showPrintButtons(false);
+            }
+        }
 
-        // --- GLOBAL FUNKTIONER TIL REDIGERING ---
-        window.updatePieceTag = function(id, newTag) {
-            const p = requiredPieces.find(p => p.id === id);
-            if(p) { p.tag = newTag; handleCalculate(); }
-        };
-
-        window.updatePieceMargin = function(id, newMargin) {
-            const margin = parseInt(newMargin);
-            if(isNaN(margin) || margin < 0) return;
-            const p = requiredPieces.find(p => p.id === id);
-            if(p) { p.customMargin = margin; handleCalculate(); }
-        };
-
-        window.updateGroupAmount = function(ids, newAmount) {
+        // --- GLOBALE FUNKTIONER TIL LIVE REDIGERING AF EMNER ---
+        window.updatePieceGroupAmount = function(ids, newAmount) {
             const target = parseInt(newAmount);
             if (isNaN(target) || target < 1) { renderPiecesList(); return; }
             const current = ids.length;
@@ -389,7 +465,7 @@
                 const template = requiredPieces.find(p => p.id === ids[0]);
                 if (template) {
                     for (let i = 0; i < (target - current); i++) {
-                        requiredPieces.push({ ...template, id: nextPieceId++ });
+                        requiredPieces.push({ ...template, id: nextPieceId++, amount: 1 });
                     }
                 }
             } else {
@@ -397,27 +473,87 @@
                 requiredPieces = requiredPieces.filter(p => !toRemove.includes(p.id));
             }
             renderPiecesList();
+            triggerAutoCalculate();
         };
 
-        window.updateGroupLength = function(ids, newLen) {
+        window.updatePieceGroupLength = function(ids, newLen) {
             const val = parseInt(newLen);
             if (isNaN(val) || val < 1) { renderPiecesList(); return; }
             requiredPieces.forEach(p => { if (ids.includes(p.id)) p.length = val; });
             renderPiecesList();
+            triggerAutoCalculate();
         };
 
-        window.updateGroupTag = function(ids, newTag) {
-            requiredPieces.forEach(p => { if (ids.includes(p.id)) p.tag = newTag.trim(); });
+        window.updatePieceGroupTag = function(ids, newTag) {
+            const trimmed = newTag.trim() || 'Emne';
+            requiredPieces.forEach(p => { if (ids.includes(p.id)) p.tag = trimmed; });
             renderPiecesList();
+            triggerAutoCalculate();
         };
 
-        // --- CORE LOGIC ---
+        // --- GLOBALE FUNKTIONER TIL LIVE REDIGERING AF LAGER ---
+        window.updateStockAmount = function(id, newAmount) {
+            const val = parseInt(newAmount);
+            if (isNaN(val) || val < 1) { renderStockList(); return; }
+            const item = stockLengths.find(s => s.id === id);
+            if (item) {
+                item.amount = val;
+                renderStockList();
+                triggerAutoCalculate();
+            }
+        };
+
+        window.updateStockLength = function(id, newLen) {
+            const val = parseInt(newLen);
+            if (isNaN(val) || val < 100) { renderStockList(); return; }
+            const item = stockLengths.find(s => s.id === id);
+            if (item) {
+                item.length = val;
+                renderStockList();
+                triggerAutoCalculate();
+            }
+        };
+
+        // --- GLOBALE FUNKTIONER TIL REDIGERING DIREKTE I SKÆREPLANEN ---
+        window.updatePieceTag = function(id, newTag) {
+            const p = requiredPieces.find(p => p.id === id);
+            if (p) {
+                p.tag = newTag.trim() || 'Emne';
+                renderPiecesList();
+                triggerAutoCalculate();
+            }
+        };
+
+        window.updatePieceLength = function(id, newLen) {
+            const val = parseInt(newLen);
+            if (isNaN(val) || val < 1) return;
+            const p = requiredPieces.find(p => p.id === id);
+            if (p) {
+                p.length = val;
+                renderPiecesList();
+                triggerAutoCalculate();
+            }
+        };
+
+        window.updatePieceMargin = function(id, newMargin) {
+            const margin = parseInt(newMargin);
+            if (isNaN(margin) || margin < 0) return;
+            const p = requiredPieces.find(p => p.id === id);
+            if (p) {
+                p.customMargin = margin;
+                renderPiecesList();
+                triggerAutoCalculate();
+            }
+        };
+
+        // --- DIMENSIONSHÅNDTERING ---
         function handleAddDimension(e) {
             e.preventDefault();
             const input = document.getElementById('dimension-name');
-            const name = input.value.trim();
-            if (name && !availableDimensions.includes(name)) {
-                availableDimensions.push(name);
+            const raw = input.value.trim();
+            const norm = normalizeDim(raw);
+            if (norm && !availableDimensions.includes(norm)) {
+                availableDimensions.push(norm);
                 availableDimensions.sort();
                 renderAllLists();
             }
@@ -425,148 +561,354 @@
         }
 
         function removeDimension(name) {
-            availableDimensions = availableDimensions.filter(d => d !== name);
-            requiredPieces = requiredPieces.filter(p => p.dimension !== name);
-            stockLengths = stockLengths.filter(s => s.dimension !== name);
+            const norm = normalizeDim(name);
+            availableDimensions = availableDimensions.filter(d => normalizeDim(d) !== norm);
+            requiredPieces = requiredPieces.filter(p => normalizeDim(p.dimension) !== norm);
+            stockLengths = stockLengths.filter(s => normalizeDim(s.dimension) !== norm);
             renderAllLists();
+            triggerAutoCalculate();
         }
 
+        // --- EMNEHÅNDTERING ---
         function handleAddPiece(e) {
             e.preventDefault();
             const fd = new FormData(e.target);
-            const piece = { 
-                id: nextPieceId++, 
-                dimension: fd.get('dimension'), 
-                tag: fd.get('tag').trim() || 'Emne', 
-                length: parseInt(fd.get('length')), 
-                amount: parseInt(fd.get('amount')), 
-                customMargin: null 
-            };
-            if (!piece.dimension || isNaN(piece.length)) return;
-            for(let i=0; i<piece.amount; i++) {
-                requiredPieces.push({ ...piece, id: nextPieceId++, amount: 1 });
+            const rawDim = fd.get('dimension');
+            const dim = normalizeDim(rawDim);
+            const tag = (fd.get('tag') || '').trim() || 'Emne';
+            const length = parseInt(fd.get('length'));
+            const amount = parseInt(fd.get('amount')) || 1;
+
+            if (!dim || isNaN(length) || length <= 0) return;
+
+            for (let i = 0; i < amount; i++) {
+                requiredPieces.push({
+                    id: nextPieceId++,
+                    dimension: dim,
+                    tag: tag,
+                    length: length,
+                    amount: 1,
+                    customMargin: null
+                });
             }
+
             renderPiecesList();
             e.target.reset();
             document.getElementById('piece-length').focus();
+            triggerAutoCalculate();
         }
 
+        function removePiece(id) {
+            requiredPieces = requiredPieces.filter(p => p.id !== id);
+            renderPiecesList();
+            triggerAutoCalculate();
+        }
+
+        // --- LAGERHÅNDTERING ---
         function handleAddStock(e) {
             e.preventDefault();
             const fd = new FormData(e.target);
-            const stock = { id: nextStockId++, dimension: fd.get('dimension'), length: parseInt(fd.get('length')), amount: parseInt(fd.get('amount')) };
-            if (!stock.dimension || isNaN(stock.length)) return;
-            stockLengths.push(stock);
-            renderStockList();
-            e.target.reset();
-        }
+            const rawDim = fd.get('dimension');
+            const dim = normalizeDim(rawDim);
+            const length = parseInt(fd.get('length'));
+            const amount = parseInt(fd.get('amount')) || 1;
 
-        function removePiece(id) { requiredPieces = requiredPieces.filter(p => p.id !== id); renderPiecesList(); }
-        function removeStock(id) { stockLengths = stockLengths.filter(s => s.id !== id); renderStockList(); }
+            if (!dim || isNaN(length) || length <= 0) return;
 
-        function handleCalculate() {
-            resultsContainer.innerHTML = '<div id="print-header" class="hidden"></div>';
-            if (requiredPieces.length === 0) { renderError('Tilføj emner først.'); return; }
-            const globalMargin = parseInt(safetyMarginInput.value) || 0;
-            try {
-                const result = runOptimization(globalMargin, stockLengths, requiredPieces);
-                renderResults(result);
-                const analysis = runAdvancedAnalysis(globalMargin);
-                renderSustainabilityReport(analysis, result.plan);
-                showPrintButtons(true);
-            } catch (error) { renderError(error.message); }
-        }
-
-        // --- OPTIMIZATION ENGINE ---
-        function runOptimization(globalMargin, currentStock, piecesToProcess) {
-            const piecesByDim = {};
-            piecesToProcess.forEach(p => {
-                if (!piecesByDim[p.dimension]) piecesByDim[p.dimension] = [];
-                const margin = p.customMargin !== null ? p.customMargin : globalMargin;
-                piecesByDim[p.dimension].push({ id: p.id, exactLength: p.length, cutLength: p.length + margin, margin: margin, tag: p.tag });
+            stockLengths.push({
+                id: nextStockId++,
+                dimension: dim,
+                length: length,
+                amount: amount
             });
 
+            renderStockList();
+            e.target.reset();
+            triggerAutoCalculate();
+        }
+
+        function removeStock(id) {
+            stockLengths = stockLengths.filter(s => s.id !== id);
+            renderStockList();
+            triggerAutoCalculate();
+        }
+
+        // --- BEREGNINGSFUNKTION ---
+        function handleCalculate() {
+            resultsContainer.innerHTML = '<div id="print-header" class="hidden"></div>';
+            if (requiredPieces.length === 0) {
+                renderError('Tilføj mindst ét ønsket emne i sektion 2.');
+                sustainabilityReportContainer.classList.add('hidden');
+                showPrintButtons(false);
+                return;
+            }
+
+            const globalMargin = parseInt(safetyMarginInput.value) || 0;
+            const autoSupplement = autoSupplementCheckbox ? autoSupplementCheckbox.checked : true;
+
+            try {
+                const result = runOptimization(globalMargin, stockLengths, requiredPieces, autoSupplement);
+                renderResults(result);
+                renderSustainabilityReport(result);
+                showPrintButtons(true);
+            } catch (error) {
+                renderError(error.message);
+                sustainabilityReportContainer.classList.add('hidden');
+                showPrintButtons(false);
+            }
+        }
+
+        // --- OPTIMERINGS-MOTOR (ROBUST BIN-PACKING) ---
+        function runOptimization(globalMargin, currentStock, piecesToProcess, autoSupplement = true) {
+            // Grupper emner pr. normaliseret dimension
+            const piecesByDim = {};
+            piecesToProcess.forEach(p => {
+                const d = normalizeDim(p.dimension);
+                if (!piecesByDim[d]) piecesByDim[d] = [];
+                const margin = (p.customMargin !== null && p.customMargin !== undefined) ? p.customMargin : globalMargin;
+                piecesByDim[d].push({
+                    id: p.id,
+                    dimension: d,
+                    exactLength: p.length,
+                    cutLength: p.length + margin,
+                    margin: margin,
+                    tag: p.tag || 'Emne'
+                });
+            });
+
+            // Grupper lager pr. normaliseret dimension
             const stockByDim = {};
-            currentStock.forEach(s => {
-                if (!stockByDim[s.dimension]) stockByDim[s.dimension] = [];
-                for (let i = 0; i < s.amount; i++) { stockByDim[s.dimension].push(s.length); }
+            (currentStock || []).forEach(s => {
+                const d = normalizeDim(s.dimension);
+                if (!stockByDim[d]) stockByDim[d] = [];
+                const amt = s.amount || 1;
+                for (let i = 0; i < amt; i++) {
+                    stockByDim[d].push(s.length);
+                }
             });
 
             const finalPlan = {};
-            let usedStockLen = 0, reqLen = 0;
+            let totalUsedStockLength = 0;
+            let totalRequiredLength = 0;
+            const shoppingList = {}; // dim -> { length: count }
 
             for (const dim in piecesByDim) {
-                // Låst sortering: Sorterer primært efter eksakt længde (netto). 
-                // Hvis længden er den samme, bruger den emnets ID. Dette forhindrer dem i at hoppe rundt!
-                const pieces = piecesByDim[dim].sort((a, b) => {
-                    if (b.exactLength !== a.exactLength) {
-                        return b.exactLength - a.exactLength;
-                    }
-                    return a.id - b.id; 
+                // Sorter emner faldende efter samlet skærelængde (brutto)
+                const pieces = [...piecesByDim[dim]].sort((a, b) => {
+                    if (b.cutLength !== a.cutLength) return b.cutLength - a.cutLength;
+                    return a.id - b.id;
                 });
-                
+
                 const available = stockByDim[dim] ? [...stockByDim[dim]] : [];
-                if (currentStock.length > 0 && available.length === 0) throw new Error(`Mangler lager til ${dim}`);
-                
+                const hasUserStock = available.length > 0;
                 const used = [];
-                for (const piece of pieces) {
-                    reqLen += piece.cutLength;
+                shoppingList[dim] = {};
+
+                for (let pIdx = 0; pIdx < pieces.length; pIdx++) {
+                    const piece = pieces[pIdx];
+                    totalRequiredLength += piece.cutLength;
+
+                    // 1. Forsøg at placere i eksisterende påbegyndte bjælker (Best Fit: mindst restspild)
                     let placed = false;
-                    used.sort((a,b) => a.rem - b.rem);
+                    used.sort((a, b) => a.rem - b.rem);
                     for (const s of used) {
-                        if (s.rem >= piece.cutLength) { s.rem -= piece.cutLength; s.pieces.push(piece); placed = true; break; }
+                        if (s.rem >= piece.cutLength) {
+                            s.rem -= piece.cutLength;
+                            s.pieces.push(piece);
+                            placed = true;
+                            break;
+                        }
                     }
-                    if (!placed) {
-                        available.sort((a,b) => a - b);
+
+                    // 2. Hvis ikke plads: tag et nyt bræt fra brugerens eget lager, hvis tilgængeligt
+                    if (!placed && available.length > 0) {
+                        available.sort((a, b) => a - b);
                         const idx = available.findIndex(l => l >= piece.cutLength);
-                        if (idx === -1) throw new Error(`Ikke nok træ (${dim}) til ${piece.exactLength}mm + margin`);
-                        const len = available.splice(idx, 1)[0];
-                        used.push({ originalLength: len, rem: len - piece.cutLength, pieces: [piece] });
+                        if (idx !== -1) {
+                            const len = available.splice(idx, 1)[0];
+                            used.push({
+                                originalLength: len,
+                                rem: len - piece.cutLength,
+                                pieces: [piece],
+                                isStock: true,
+                                isStandard: false
+                            });
+                            placed = true;
+                        }
+                    }
+
+                    // 3. Hvis stadig ikke placeret: suppler med standard handelslængde (2,4 - 5,4 m)
+                    if (!placed) {
+                        if (!autoSupplement && hasUserStock) {
+                            throw new Error(`Eget lager af dimension ${dim} er opbrugt! Mangler bræt til emne '${piece.tag}' (${piece.exactLength} mm + ${piece.margin} mm ekstra). Tilføj flere brædder på lager, eller slå automatisk supplering til.`);
+                        }
+
+                        const suitableLengths = STANDARD_LENGTHS.filter(l => l >= piece.cutLength);
+                        if (suitableLengths.length === 0) {
+                            const maxStd = STANDARD_LENGTHS[STANDARD_LENGTHS.length - 1];
+                            throw new Error(`Emnet '${piece.tag}' (${piece.exactLength} mm + ${piece.margin} mm ekstra = ${piece.cutLength} mm) er længere end den maksimale standardlængde (${maxStd} mm). Tjek venligst emnets længde.`);
+                        }
+
+                        // Vælg den standardlængde, der giver mindst restspild i samspil med kommende emner
+                        let bestCandidate = suitableLengths[0];
+                        let minCandidateWaste = Infinity;
+
+                        for (const candidate of suitableLengths) {
+                            let remSpace = candidate - piece.cutLength;
+                            for (let j = pIdx + 1; j < pieces.length; j++) {
+                                const nextPiece = pieces[j];
+                                if (remSpace >= nextPiece.cutLength) {
+                                    remSpace -= nextPiece.cutLength;
+                                }
+                            }
+                            if (remSpace < minCandidateWaste) {
+                                minCandidateWaste = remSpace;
+                                bestCandidate = candidate;
+                            }
+                        }
+
+                        const chosenLen = bestCandidate;
+                        shoppingList[dim][chosenLen] = (shoppingList[dim][chosenLen] || 0) + 1;
+                        used.push({
+                            originalLength: chosenLen,
+                            rem: chosenLen - piece.cutLength,
+                            pieces: [piece],
+                            isStock: false,
+                            isStandard: true
+                        });
                     }
                 }
-                finalPlan[dim] = used.map(s => { usedStockLen += s.originalLength; return { originalLength: s.originalLength, pieces: s.pieces, waste: s.rem }; });
+
+                finalPlan[dim] = used.map(s => {
+                    totalUsedStockLength += s.originalLength;
+                    return {
+                        originalLength: s.originalLength,
+                        pieces: s.pieces,
+                        waste: s.rem,
+                        isStock: s.isStock,
+                        isStandard: s.isStandard
+                    };
+                });
             }
-            return { plan: finalPlan, totalUsedStockLength: usedStockLen, totalRequiredLength: reqLen, totalWaste: usedStockLen - reqLen, wastePercentage: usedStockLen > 0 ? ((usedStockLen - reqLen) / usedStockLen) * 100 : 0 };
+
+            const totalWaste = totalUsedStockLength - totalRequiredLength;
+            const wastePercentage = totalUsedStockLength > 0 ? (totalWaste / totalUsedStockLength) * 100 : 0;
+
+            return {
+                plan: finalPlan,
+                totalUsedStockLength,
+                totalRequiredLength,
+                totalWaste,
+                wastePercentage,
+                shoppingList,
+                piecesByDim
+            };
         }
 
         // --- UI RENDERING ---
-        function renderAllLists() { renderDimensionsList(); updateDimensionDropdowns(); renderPiecesList(); renderStockList(); }
-        function updateDimensionDropdowns() { 
+        function renderAllLists() {
+            renderDimensionsList();
+            updateDimensionDropdowns();
+            renderPiecesList();
+            renderStockList();
+        }
+
+        function updateDimensionDropdowns() {
             const html = availableDimensions.map(d => `<option value="${d}">${d}</option>`).join('');
-            pieceDimensionSelect.innerHTML = html; stockDimensionSelect.innerHTML = html; 
+            pieceDimensionSelect.innerHTML = html;
+            stockDimensionSelect.innerHTML = html;
         }
+
         function renderDimensionsList() {
-            dimensionsListContainer.innerHTML = availableDimensions.map(d => `<div class="flex justify-between items-center p-2 bg-gray-50 rounded-md border border-gray-200"><span class="font-mono text-sm">${d}</span><button onclick="removeDimension('${d}')" class="text-red-500 font-semibold text-sm">Fjern</button></div>`).join('') || '<p class="text-sm text-gray-500">Ingen dimensioner.</p>';
+            dimensionsListContainer.innerHTML = availableDimensions.map(d => `
+                <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-gray-100 border border-gray-300 text-xs font-mono font-medium text-gray-800">
+                    ${d}
+                    <button onclick="removeDimension('${d}')" class="text-gray-400 hover:text-red-600 transition font-bold text-sm ml-0.5" title="Fjern dimension">&times;</button>
+                </span>
+            `).join('') || '<p class="text-xs text-gray-400">Ingen dimensioner tilføjet.</p>';
         }
+
         function renderPiecesList() {
             const grouped = {};
             requiredPieces.forEach(p => {
-                const key = `${p.dimension}-${p.length}-${p.tag}-${p.customMargin}`;
-                if(!grouped[key]) grouped[key] = { ...p, amount: 0, ids: [] };
-                grouped[key].amount++; grouped[key].ids.push(p.id);
+                const normDim = normalizeDim(p.dimension);
+                const key = `${normDim}-${p.length}-${p.tag}-${p.customMargin}`;
+                if (!grouped[key]) grouped[key] = { ...p, dimension: normDim, amount: 0, ids: [] };
+                grouped[key].amount++;
+                grouped[key].ids.push(p.id);
             });
-            piecesListContainer.innerHTML = Object.values(grouped).map(p => `
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <div class="flex-grow">
-                        <div class="font-mono text-sm flex items-center gap-2 mb-1">
-                            <div class="flex items-center group"><input type="number" class="inline-edit w-8 font-bold" value="${p.amount}" onchange='updateGroupAmount(${JSON.stringify(p.ids)}, this.value)'>stk. ${svgPencil}</div>
-                            <span>|</span> <span>${p.dimension}</span> <span>|</span>
-                            <div class="flex items-center group"><input type="number" class="inline-edit w-14 font-bold" value="${p.length}" onchange='updateGroupLength(${JSON.stringify(p.ids)}, this.value)'>mm ${svgPencil}</div>
-                        </div>
-                        <div class="flex items-center group"><input type="text" class="inline-edit text-xs text-indigo-600 font-semibold w-full text-left" value="${p.tag}" onchange='updateGroupTag(${JSON.stringify(p.ids)}, this.value)'>${svgPencil}</div>
-                    </div>
-                    <button onclick='${JSON.stringify(p.ids)}.forEach(id => removePiece(id))' class="text-red-500 text-sm font-semibold">Fjern</button>
-                </div>
-            `).join('') || '<p class="text-sm text-gray-500">Ingen emner.</p>';
-        }
-        function renderStockList() {
-            stockListContainer.innerHTML = stockLengths.map(s => `<div class="flex justify-between items-center p-2 bg-gray-50 rounded-md border border-gray-200"><span class="font-mono text-sm">${s.amount} stk. | ${s.dimension} | ${s.length} mm</span><button onclick="removeStock(${s.id})" class="text-red-500 text-sm font-semibold">Fjern</button></div>`).join('') || '<p class="text-sm text-gray-500">Ingen lagerlængder.</p>';
-        }
-        function renderResults(res) {
-            const summary = `<div class="mb-8 p-4 bg-gray-50 rounded-lg border text-sm"><h3 class="text-lg font-semibold mb-3">Samlet Oversigt</h3><div class="grid grid-cols-2 gap-2"><span>Anvendt træ:</span><span class="font-bold text-right">${(res.totalUsedStockLength/1000).toFixed(2)} m</span><span>Spild:</span><span class="font-bold text-red-600 text-right">${(res.totalWaste/1000).toFixed(2)} m (${res.wastePercentage.toFixed(1)}%)</span></div></div>`;
-            resultsContainer.innerHTML += summary;
 
-            let planHTML = '<div class="space-y-6"><h3 class="text-lg font-semibold">Visuel Skæreplan</h3>';
+            piecesListContainer.innerHTML = Object.values(grouped).map(p => `
+                <div class="flex justify-between items-center p-2.5 bg-gray-50 hover:bg-gray-100 rounded-md border border-gray-200 text-sm transition">
+                    <div class="flex-grow flex flex-wrap items-center gap-2">
+                        <div class="font-mono text-sm flex items-center group bg-white px-2 py-0.5 rounded border border-gray-200">
+                            <input type="number" min="1" class="inline-edit w-10 font-bold text-indigo-700 text-center" value="${p.amount}" onchange='updatePieceGroupAmount(${JSON.stringify(p.ids)}, this.value)'>
+                            <span class="text-xs text-gray-500 ml-1">stk.</span>
+                            ${svgPencil}
+                        </div>
+                        <span class="text-gray-400 font-mono">|</span>
+                        <span class="font-mono font-semibold text-gray-700 bg-gray-200/70 px-2 py-0.5 rounded text-xs">${p.dimension}</span>
+                        <span class="text-gray-400 font-mono">|</span>
+                        <div class="font-mono text-sm flex items-center group bg-white px-2 py-0.5 rounded border border-gray-200">
+                            <input type="number" min="1" step="1" class="inline-edit w-16 font-bold text-gray-800 text-center" value="${p.length}" onchange='updatePieceGroupLength(${JSON.stringify(p.ids)}, this.value)'>
+                            <span class="text-xs text-gray-500 ml-1">mm</span>
+                            ${svgPencil}
+                        </div>
+                        <div class="flex items-center group flex-grow min-w-[100px] ml-1">
+                            <input type="text" class="inline-edit text-xs text-indigo-600 font-semibold w-full text-left bg-transparent" value="${p.tag}" onchange='updatePieceGroupTag(${JSON.stringify(p.ids)}, this.value)'>
+                            ${svgPencil}
+                        </div>
+                    </div>
+                    <button onclick='${JSON.stringify(p.ids)}.forEach(id => removePiece(id))' class="text-red-500 hover:text-red-700 text-xs font-semibold ml-2 px-2 py-1 rounded hover:bg-red-50 transition">Fjern</button>
+                </div>
+            `).join('') || '<p class="text-xs text-gray-400 italic">Ingen emner tilføjet endnu.</p>';
+        }
+
+        function renderStockList() {
+            stockListContainer.innerHTML = stockLengths.map(s => `
+                <div class="flex justify-between items-center p-2.5 bg-gray-50 hover:bg-gray-100 rounded-md border border-gray-200 text-sm transition">
+                    <div class="flex items-center gap-2 font-mono text-xs text-gray-800">
+                        <div class="flex items-center group bg-white px-2 py-0.5 rounded border border-gray-200">
+                            <input type="number" min="1" class="inline-edit w-10 font-bold text-center text-blue-700" value="${s.amount}" onchange="updateStockAmount(${s.id}, this.value)">
+                            <span class="text-xs text-gray-500 ml-1">stk.</span>
+                            ${svgPencil}
+                        </div>
+                        <span>|</span>
+                        <span class="font-bold bg-gray-200/70 px-2 py-0.5 rounded">${s.dimension}</span>
+                        <span>|</span>
+                        <div class="flex items-center group bg-white px-2 py-0.5 rounded border border-gray-200">
+                            <input type="number" min="500" step="100" class="inline-edit w-14 font-bold text-center" value="${s.length}" onchange="updateStockLength(${s.id}, this.value)">
+                            <span class="text-xs text-gray-500 ml-1">mm</span>
+                            ${svgPencil}
+                        </div>
+                    </div>
+                    <button onclick="removeStock(${s.id})" class="text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-1 rounded hover:bg-red-50 transition">Fjern</button>
+                </div>
+            `).join('') || '<p class="text-xs text-gray-400 italic">Ingen eget lager indtastet (appen anvender automatiske handelslængder).</p>';
+        }
+
+        function renderResults(res) {
+            // Samlet oversigt
+            const summary = `
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm shadow-sm">
+                    <h3 class="text-base font-bold text-gray-800 mb-2 flex items-center justify-between">
+                        <span>Samlet Forbrugsoversigt</span>
+                        <span class="text-xs font-normal text-gray-500">${(res.totalRequiredLength/1000).toFixed(2)} m emner (inkl. tillæg)</span>
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-gray-200">
+                        <span class="text-gray-600">Samlet anvendt træ:</span>
+                        <span class="font-bold text-right text-gray-900">${(res.totalUsedStockLength/1000).toFixed(2)} m</span>
+                        <span class="text-gray-600">Samlet spild:</span>
+                        <span class="font-bold text-right ${res.wastePercentage > 15 ? 'text-amber-600' : 'text-green-600'}">
+                            ${(res.totalWaste/1000).toFixed(2)} m (${res.wastePercentage.toFixed(1)}%)
+                        </span>
+                    </div>
+                </div>`;
+
+            resultsContainer.innerHTML = summary;
+
+            // Visuel skæreplan
+            let planHTML = '<div class="space-y-6"><h3 class="text-lg font-bold text-gray-800">Visuel Skæreplan <span class="text-xs font-normal text-gray-500">(Tryk på navne, længder eller tillæg for at rette)</span></h3>';
             
             const sortedDimensions = Object.keys(res.plan).sort();
 
@@ -574,31 +916,53 @@
                 const dimPlan = res.plan[dim];
                 if (dimPlan.length === 0) continue;
 
-                // Optæl det samlede antal stykker for denne dimension
                 let totalPiecesInDim = 0;
-                dimPlan.forEach(stock => {
-                    totalPiecesInDim += stock.pieces.length;
-                });
-                
-                // Overskrift med antal stykker og dimension
-                let dimHeader = `${totalPiecesInDim} stk. ${dim}`;
+                dimPlan.forEach(stock => { totalPiecesInDim += stock.pieces.length; });
 
-                planHTML += `<div class="mt-4"><h4 class="font-bold text-gray-800 text-lg">${dimHeader}</h4>`;
+                planHTML += `
+                    <div class="mt-4 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="font-bold text-gray-800 text-base mb-3 flex items-center justify-between">
+                            <span>${dim}</span>
+                            <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-medium">${totalPiecesInDim} emner fordelt på ${dimPlan.length} brædder</span>
+                        </h4>`;
                 
                 dimPlan.forEach((stock, i) => {
-                    planHTML += `<div class="mt-4 text-xs font-medium text-gray-600">Lager #${i+1} (${stock.originalLength}mm)<div class="stock-bar mt-1">`;
+                    const badge = stock.isStock 
+                        ? `<span class="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded font-medium">Eget lager</span>`
+                        : `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-medium">Standardkøb</span>`;
+
+                    planHTML += `
+                        <div class="mt-3 text-xs font-medium text-gray-600">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="flex items-center gap-1.5">Bræt #${i+1} (${stock.originalLength} mm) ${badge}</span>
+                                <span class="text-gray-500 text-[11px]">Restspild: ${stock.waste} mm</span>
+                            </div>
+                            <div class="stock-bar">`;
+
                     stock.pieces.forEach(p => {
                         const w = (p.cutLength / stock.originalLength) * 100;
                         const netW = (p.exactLength / p.cutLength) * 100;
                         const margW = (p.margin / p.cutLength) * 100;
                         
-                        // Farven bindes nu til ID'et, så den ikke skifter, når rækkefølgen låses
-                        planHTML += `<div class="piece-wrapper" style="width:${w}%; background:${pieceColors[p.id % pieceColors.length]}">
-                            <div class="piece-segment" style="width:${netW}%"><input class="editable font-bold text-center w-full" value="${p.tag}" onchange="updatePieceTag(${p.id}, this.value)"><span>${p.exactLength} mm</span></div>
-                            ${p.margin > 0 ? `<div class="margin-segment" style="width:${margW}%"><input type="number" class="margin-input" value="${p.margin}" onchange="updatePieceMargin(${p.id}, this.value)"></div>` : ''}
-                        </div>`;
+                        planHTML += `
+                            <div class="piece-wrapper" style="width:${w}%; background:${pieceColors[p.id % pieceColors.length]}">
+                                <div class="piece-segment" style="width:${netW}%">
+                                    <input class="editable font-bold text-center w-full text-xs" value="${p.tag}" onchange="updatePieceTag(${p.id}, this.value)" title="Ret navn">
+                                    <div class="flex items-center justify-center gap-0.5 text-[11px] font-mono">
+                                        <input type="number" min="1" class="editable font-bold text-center w-12 text-[11px] p-0" value="${p.exactLength}" onchange="updatePieceLength(${p.id}, this.value)" title="Ret længde">
+                                        <span>mm</span>
+                                    </div>
+                                </div>
+                                ${p.margin > 0 ? `
+                                <div class="margin-segment" style="width:${margW}%;" title="Ekstra tillæg: ${p.margin} mm">
+                                    <input type="number" min="0" class="margin-input" value="${p.margin}" onchange="updatePieceMargin(${p.id}, this.value)" title="Ret tillæg">
+                                </div>` : ''}
+                            </div>`;
                     });
-                    if (stock.waste > 0) planHTML += `<div class="waste-segment" style="width:${(stock.waste/stock.originalLength)*100}%">Spild ${stock.waste}mm</div>`;
+
+                    if (stock.waste > 0) {
+                        planHTML += `<div class="waste-segment" style="width:${(stock.waste/stock.originalLength)*100}%">Spild ${stock.waste}mm</div>`;
+                    }
                     planHTML += `</div></div>`;
                 });
                 planHTML += `</div>`;
@@ -606,112 +970,247 @@
             resultsContainer.innerHTML += planHTML + '</div>';
         }
 
-        // --- ANDRE FUNKTIONER ---
-        function renderError(m) { resultsContainer.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200 font-semibold">${m}</div>`; }
-        function showPrintButtons(s) { printBtnDesktop.classList.toggle('hidden', !s); }
-        function handlePrint() { window.print(); }
-        function handleSaveProject() { 
-            const name = projectNameInput.value.trim();
-            if (!name) { alert('Indtast venligst et navn til dit projekt.'); return; }
-            const projects = getSavedProjects();
-            projects[name] = { availableDimensions, requiredPieces, stockLengths, safetyMargin: safetyMarginInput.value, printProjectName: printProjectNameInput.value, nextPieceId, nextStockId };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-            populateProjectsDropdown(); alert(`Projektet '${name}' er gemt lokalt.`);
+        function renderSustainabilityReport(res) {
+            // Beregn naiv afkortning (hvis man købte 1 standardbræt pr. emne)
+            let totalNaiveLength = 0;
+            for (const dim in res.piecesByDim) {
+                res.piecesByDim[dim].forEach(p => {
+                    const suitable = STANDARD_LENGTHS.find(l => l >= p.cutLength) || 5400;
+                    totalNaiveLength += suitable;
+                });
+            }
+
+            const savedMeters = Math.max(0, (totalNaiveLength - res.totalUsedStockLength) / 1000);
+            const savedPct = totalNaiveLength > 0 ? ((totalNaiveLength - res.totalUsedStockLength) / totalNaiveLength) * 100 : 0;
+            // Estimeret CO2-besparelse: ca. 0.9 kg CO2 pr. meter konstruktionstræ (45x120 snit)
+            const co2SavedKg = savedMeters * 0.9;
+
+            // Indkøbsliste baseret på shoppingList
+            let shoppingHTML = '';
+            let hasPurchases = false;
+            for (const dim in res.shoppingList) {
+                const lengths = res.shoppingList[dim];
+                const items = [];
+                for (const len in lengths) {
+                    if (lengths[len] > 0) {
+                        items.push(`${lengths[len]} stk. á ${len} mm (${(len/1000).toFixed(1)} m)`);
+                        hasPurchases = true;
+                    }
+                }
+                if (items.length > 0) {
+                    shoppingHTML += `<li class="text-xs md:text-sm"><span class="font-bold text-gray-800">${dim}:</span> ${items.join(', ')}</li>`;
+                }
+            }
+
+            const html = `
+                <div class="border-b border-gray-200 pb-3 mb-3">
+                    <h3 class="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        Materialeliste & Bæredygtighed
+                    </h3>
+                </div>
+                
+                <div class="space-y-3 text-sm">
+                    ${hasPurchases ? `
+                    <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-md">
+                        <h4 class="font-bold text-indigo-900 text-xs md:text-sm mb-1">Anbefalet Indkøb (Tømmerhandel):</h4>
+                        <ul class="list-disc list-inside space-y-1 text-indigo-800">${shoppingHTML}</ul>
+                    </div>` : `
+                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-md text-xs md:text-sm text-blue-800">
+                        <strong>Alt dækket af eget lager:</strong> Ingen nye indkøb nødvendige.
+                    </div>`}
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-md">
+                            <span class="text-xs font-medium text-emerald-800 block">Træ sparet ved optimering:</span>
+                            <span class="text-lg font-bold text-emerald-700">${savedMeters.toFixed(2)} meter</span>
+                            <span class="text-xs text-emerald-600 block mt-0.5">(-${savedPct.toFixed(0)}% ift. uoptimeret køb)</span>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-md">
+                            <span class="text-xs font-medium text-emerald-800 block">Anslået CO2-besparelse:</span>
+                            <span class="text-lg font-bold text-emerald-700">ca. ${co2SavedKg.toFixed(1)} kg CO2</span>
+                            <span class="text-xs text-emerald-600 block mt-0.5">Mindre fældning og affald</span>
+                        </div>
+                    </div>
+                </div>`;
+
+            sustainabilityReportContainer.innerHTML = html;
+            sustainabilityReportContainer.classList.remove('hidden');
         }
-        function handleLoadProject() { 
+
+        // --- ANDRE FUNKTIONER ---
+        function renderError(msg) {
+            resultsContainer.innerHTML = `
+                <div class="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 text-sm">
+                    <div class="flex items-center gap-2 font-bold mb-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Bemærk venligst:
+                    </div>
+                    <p>${msg}</p>
+                </div>`;
+        }
+
+        function showPrintButtons(show) {
+            printBtnDesktop.classList.toggle('hidden', !show);
+        }
+
+        function handlePrint() {
+            const printHeader = document.getElementById('print-header');
+            const pName = printProjectNameInput.value.trim() || 'Træoptimerings-Projekt';
+            printHeader.innerText = pName;
+            window.print();
+        }
+
+        function handleSaveProject() {
+            const name = projectNameInput.value.trim();
+            if (!name) {
+                alert('Indtast venligst et navn til dit projekt.');
+                return;
+            }
+            const projects = getSavedProjects();
+            projects[name] = {
+                availableDimensions,
+                requiredPieces,
+                stockLengths,
+                safetyMargin: safetyMarginInput.value,
+                printProjectName: printProjectNameInput.value,
+                nextPieceId,
+                nextStockId
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+            populateProjectsDropdown();
+            alert(`Projektet '${name}' er gemt lokalt.`);
+        }
+
+        function handleLoadProject() {
             const name = savedProjectsSelect.value;
             if (!name) return;
             const projects = getSavedProjects();
             const data = projects[name];
             if (data) {
-                availableDimensions = data.availableDimensions || [];
-                requiredPieces = data.requiredPieces || [];
-                stockLengths = data.stockLengths || [];
-                safetyMarginInput.value = data.safetyMargin || 100;
+                availableDimensions = (data.availableDimensions || []).map(normalizeDim);
+                requiredPieces = (data.requiredPieces || []).map(p => ({ ...p, dimension: normalizeDim(p.dimension) }));
+                stockLengths = (data.stockLengths || []).map(s => ({ ...s, dimension: normalizeDim(s.dimension) }));
+                safetyMarginInput.value = data.safetyMargin || 50;
+                currentMarginDisplay.innerText = (data.safetyMargin || 50) + ' mm';
                 printProjectNameInput.value = data.printProjectName || '';
-                nextPieceId = data.nextPieceId || 0; nextStockId = data.nextStockId || 0;
                 projectNameInput.value = name;
+                nextPieceId = data.nextPieceId || (requiredPieces.length + 1);
+                nextStockId = data.nextStockId || (stockLengths.length + 1);
                 renderAllLists();
-                resultsContainer.innerHTML = '<div id="print-header" class="hidden"></div>';
-                sustainabilityReportContainer.classList.add('hidden');
-                showPrintButtons(false); alert(`Projektet '${name}' er indlæst.`);
+                triggerAutoCalculate();
+                alert(`Projektet '${name}' er indlæst.`);
             }
         }
-        function handleDeleteProject() { 
+
+        function handleDeleteProject() {
             const name = savedProjectsSelect.value;
             if (!name) return;
-            if (confirm(`Slet projektet '${name}'?`)) {
+            if (confirm(`Er du sikker på, at du vil slette projektet '${name}'?`)) {
                 const projects = getSavedProjects();
                 delete projects[name];
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-                populateProjectsDropdown(); alert(`Slettet.`);
+                populateProjectsDropdown();
             }
         }
-        function handleSaveToFile() { 
+
+        function handleSaveToFile() {
             const projectName = printProjectNameInput.value.trim() || 'trae-projekt';
             const filename = `${projectName.replace(/[^a-z0-9æøå]/gi, '_').toLowerCase()}.json`;
-            const projectData = { availableDimensions, requiredPieces, stockLengths, safetyMargin: safetyMarginInput.value, printProjectName: printProjectNameInput.value, nextPieceId, nextStockId, version: '3.8' };
+            const projectData = {
+                version: '3.9',
+                availableDimensions,
+                requiredPieces,
+                stockLengths,
+                safetyMargin: safetyMarginInput.value,
+                printProjectName: printProjectNameInput.value,
+                nextPieceId,
+                nextStockId
+            };
             const dataStr = JSON.stringify(projectData, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
-            link.href = url; link.download = filename;
-            document.body.appendChild(link); link.click();
-            document.body.removeChild(link); URL.revokeObjectURL(url);
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
-        function handleLoadFromFile(e) { 
+
+        function handleLoadFromFile(e) {
             const file = e.target.files[0];
-            if (!file) { return; }
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = function(evt) {
                 try {
                     const data = JSON.parse(evt.target.result);
                     if (!data.availableDimensions || !data.requiredPieces) throw new Error('Ugyldigt filformat.');
-                    availableDimensions = data.availableDimensions || [];
-                    requiredPieces = data.requiredPieces || [];
-                    stockLengths = data.stockLengths || [];
-                    safetyMarginInput.value = data.safetyMargin || 100;
+                    availableDimensions = (data.availableDimensions || []).map(normalizeDim);
+                    requiredPieces = (data.requiredPieces || []).map(p => ({ ...p, dimension: normalizeDim(p.dimension) }));
+                    stockLengths = (data.stockLengths || []).map(s => ({ ...s, dimension: normalizeDim(s.dimension) }));
+                    safetyMarginInput.value = data.safetyMargin || 50;
+                    currentMarginDisplay.innerText = (data.safetyMargin || 50) + ' mm';
                     printProjectNameInput.value = data.printProjectName || '';
                     projectNameInput.value = data.printProjectName || '';
-                    nextPieceId = data.nextPieceId || 0;
-                    nextStockId = data.nextStockId || 0;
+                    nextPieceId = data.nextPieceId || (requiredPieces.length + 1);
+                    nextStockId = data.nextStockId || (stockLengths.length + 1);
                     renderAllLists();
-                    resultsContainer.innerHTML = '<div id="print-header" class="hidden"></div>';
-                    sustainabilityReportContainer.classList.add('hidden');
-                    showPrintButtons(false);
-                    alert(`Filen er indlæst.`);
-                } catch (error) { alert(`Fejl: ${error.message}`);
-                } finally { e.target.value = null; }
+                    triggerAutoCalculate();
+                    alert('Projektfilen er indlæst.');
+                } catch (err) {
+                    alert('Fejl ved indlæsning af fil: ' + err.message);
+                } finally {
+                    e.target.value = null;
+                }
             };
             reader.readAsText(file);
         }
-        function runAdvancedAnalysis(m) { 
-            let totalNaiveWasteLength = 0;
-            const naiveWasteDetails = {};
-            const purchaseSuggestion = {};
-            return { totalNaiveWasteLength, naiveWasteDetails, purchaseSuggestion }; 
-        } 
-        function renderSustainabilityReport(a, p) { sustainabilityReportContainer.classList.add('hidden'); }
+
         function populateStandardLengthsDropdown() {
-            let html = ''; for (let l = 2400; l <= 5400; l += 300) html += `<option value="${l}">${l} mm</option>`;
+            let html = '';
+            for (let l = 2400; l <= 5400; l += 300) {
+                html += `<option value="${l}">${l} mm (${(l/1000).toFixed(1)} m)</option>`;
+            }
             stockLengthSelect.innerHTML = html;
         }
-        function getSavedProjects() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+
+        function getSavedProjects() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        }
+
         function populateProjectsDropdown() {
             const projects = getSavedProjects();
             const projectNames = Object.keys(projects);
             if (projectNames.length === 0) {
                 savedProjectsSelect.innerHTML = `<option>Ingen gemte projekter</option>`;
-                savedProjectsSelect.disabled = true; loadProjectBtn.disabled = true; deleteProjectBtn.disabled = true;
+                savedProjectsSelect.disabled = true;
+                loadProjectBtn.disabled = true;
+                deleteProjectBtn.disabled = true;
             } else {
                 savedProjectsSelect.innerHTML = projectNames.map(name => `<option value="${name}">${name}</option>`).join('');
-                savedProjectsSelect.disabled = false; loadProjectBtn.disabled = false; deleteProjectBtn.disabled = false;
+                savedProjectsSelect.disabled = false;
+                loadProjectBtn.disabled = false;
+                deleteProjectBtn.disabled = false;
             }
         }
 
-        populateStandardLengthsDropdown();
-        populateProjectsDropdown();
-        renderAllLists();
+        // --- INITIALISERING ---
+        function init() {
+            availableDimensions = availableDimensions.map(normalizeDim);
+            populateStandardLengthsDropdown();
+            populateProjectsDropdown();
+            renderAllLists();
+            const marginVal = parseInt(safetyMarginInput.value) || 50;
+            currentMarginDisplay.innerText = marginVal + ' mm';
+        }
+
+        init();
     </script>
 </body>
 </html>
