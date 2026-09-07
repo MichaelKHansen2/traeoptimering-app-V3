@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Træoptimerings-App v3.9.4</title>
+    <title>Træoptimerings-App v3.9.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,15 +163,20 @@
 
     <div class="max-w-7xl mx-auto print-container">
         <header class="text-center mb-6 print-hide">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.4</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.5</h1>
             <p class="text-gray-600 mt-1 text-sm md:text-base">Mængdeberegning, Deling, Udskrift & Bæredygtighedsanalyse</p>
-            <div class="flex items-center justify-center gap-3 mt-1.5 flex-wrap">
+            <div class="flex items-center justify-center gap-3 mt-2 flex-wrap">
                 <span id="version-info" class="text-xs text-gray-400"></span>
                 <span class="text-gray-300">&bull;</span>
                 <div id="auto-save-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span id="auto-save-text">Kladde automatisk gemt</span>
                 </div>
+                <span class="text-gray-300">&bull;</span>
+                <button id="force-reload-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition shadow-sm" title="Tvinger browseren til at hente den nyeste version og rydde eventuel gammel browser-cache">
+                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Opdater app (v3.9.5)</span>
+                </button>
             </div>
         </header>
 
@@ -409,6 +414,19 @@
                         </div>
                     </div>
 
+                    <!-- 1b. Målvisning på print -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <label for="print-opt-display-mode" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242L11.758 4.757a3 3 0 014.242 0l2.879 2.879a3 3 0 010 4.242z"></path></svg>
+                            Målvisning på Skæreplan (Print)
+                        </label>
+                        <select id="print-opt-display-mode" class="w-full p-2 rounded border border-gray-300 bg-white font-medium text-xs focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="gross" selected>🪚 Råmål inkl. tillæg (Afkortningsmål til saven)</option>
+                            <option value="net">📐 Præcise nettomål (Tegningsmål ekskl. tillæg)</option>
+                            <option value="both">📏 Begge mål (Både nettomål og råmål)</option>
+                        </select>
+                    </div>
+
                     <!-- 2. Skalering & Kompakthed -->
                     <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                         <div class="flex items-center justify-between mb-1.5">
@@ -511,6 +529,7 @@
         let nextPieceId = 1;
         let nextStockId = 1;
         let latestOptimizationResult = null;
+        let cutDisplayMode = null; // 'gross' (råmål), 'net' (præcist mål), 'both' (begge mål)
 
         // Normalisering af dimensioner: gør '45×120', ' 45 x 120 ', '45X120' til standard '45x120'
         function normalizeDim(dim) {
@@ -572,6 +591,8 @@
         const printNotesInput = document.getElementById('print-notes-input');
         const printPreviewSheet = document.getElementById('print-preview-sheet');
         const printRenderZone = document.getElementById('print-render-zone');
+        const printOptDisplayMode = document.getElementById('print-opt-display-mode');
+        const forceReloadBtn = document.getElementById('force-reload-btn');
 
         // --- EVENT LISTENERS ---
         saveProjectBtn.addEventListener('click', handleSaveProject);
@@ -594,7 +615,7 @@
         if (cancelPrintBtn) cancelPrintBtn.addEventListener('click', closePrintModal);
         if (executePrintBtn) executePrintBtn.addEventListener('click', executePrint);
 
-        [printOptOrientation, printOptSize, printIncHeader, printIncSummary, printIncPlan, printIncParts, printIncShopping].forEach(el => {
+        [printOptOrientation, printOptSize, printIncHeader, printIncSummary, printIncPlan, printIncParts, printIncShopping, printOptDisplayMode].forEach(el => {
             if (el) el.addEventListener('change', updatePrintPreview);
         });
         if (printOptScale) {
@@ -612,6 +633,14 @@
                 }
             });
         });
+
+        if (forceReloadBtn) {
+            forceReloadBtn.addEventListener('click', () => {
+                saveAutoDraft();
+                const base = window.location.origin + window.location.pathname;
+                window.location.replace(base + '?v=' + Date.now());
+            });
+        }
 
         if (autoSupplementCheckbox) {
             autoSupplementCheckbox.addEventListener('change', () => {
@@ -636,7 +665,7 @@
         });
 
         // Opdater versionsdato automatisk
-        document.getElementById('version-info').innerHTML = "Version 3.9.4 &bull; Sidst opdateret: " + document.lastModified;
+        document.getElementById('version-info').innerHTML = "Version 3.9.5 &bull; Sidst opdateret: " + document.lastModified;
 
         // --- LIVE BEREGNINGSTRIGGER ---
         function triggerAutoCalculate() {
@@ -746,6 +775,18 @@
                 p.customMargin = margin;
                 renderPiecesList();
                 triggerAutoCalculate();
+            }
+        };
+
+        window.setCutDisplayMode = function(mode) {
+            cutDisplayMode = mode;
+            triggerAutoDraft();
+            if (latestOptimizationResult) {
+                renderResults(latestOptimizationResult);
+                renderSustainabilityReport(latestOptimizationResult);
+            }
+            if (printModal && !printModal.classList.contains('hidden')) {
+                updatePrintPreview();
             }
         };
 
@@ -1140,6 +1181,70 @@
             // Visuel skæreplan
             let planHTML = '<div class="space-y-6"><h3 class="text-lg font-bold text-gray-800">Visuel Skæreplan <span class="text-xs font-normal text-gray-500">(Tryk på navne, længder eller tillæg for at rette)</span></h3>';
             
+            // Målvisnings-kontrol (Aktiv stillingtagen før afkortning)
+            if (cutDisplayMode === null) {
+                planHTML += `
+                    <div class="p-4 bg-amber-50 rounded-xl border-2 border-amber-300 shadow-sm mb-4">
+                        <div class="flex items-center gap-2 mb-1.5 text-amber-900 font-bold text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>Vælg målvisning inden afkortning ved saven:</span>
+                        </div>
+                        <p class="text-xs text-amber-800 mb-3 leading-relaxed">
+                            For at undgå dyre fejlsnit på værkstedet skal du aktivt tage stilling: Skal målene på brædderne vise <strong>det rå mål der saves</strong> (inkl. renskæringstillæg), <strong>det præcise nettomål</strong> fra tegningen, eller <strong>begge mål</strong>?
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <button type="button" onclick="setCutDisplayMode('gross')" class="p-3 bg-white hover:bg-amber-100/90 border-2 border-amber-400 rounded-lg text-left transition shadow-sm group">
+                                <div class="font-bold text-xs text-amber-900 group-hover:text-amber-950 flex items-center gap-1.5">
+                                    <span>🪚 Råmål (Inkl. tillæg)</span>
+                                </div>
+                                <p class="text-[11px] text-gray-600 mt-1">Viser det rå mål du skal save ved afkortersaven (f.eks. 1617 mm).</p>
+                            </button>
+                            <button type="button" onclick="setCutDisplayMode('net')" class="p-3 bg-white hover:bg-indigo-50 border-2 border-gray-300 hover:border-indigo-400 rounded-lg text-left transition shadow-sm group">
+                                <div class="font-bold text-xs text-gray-800 group-hover:text-indigo-900 flex items-center gap-1.5">
+                                    <span>📐 Præcist nettomål</span>
+                                </div>
+                                <p class="text-[11px] text-gray-600 mt-1">Viser det færdige mål fra tegningen (f.eks. 1567 mm).</p>
+                            </button>
+                            <button type="button" onclick="setCutDisplayMode('both')" class="p-3 bg-white hover:bg-blue-50 border-2 border-gray-300 hover:border-blue-400 rounded-lg text-left transition shadow-sm group">
+                                <div class="font-bold text-xs text-gray-800 group-hover:text-blue-900 flex items-center gap-1.5">
+                                    <span>📏 Begge mål (Netto & Rå)</span>
+                                </div>
+                                <p class="text-[11px] text-gray-600 mt-1">Viser både nettomål og råmål ved saven (1567 / 1617 mm).</p>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                let badgeClass = 'bg-amber-100 text-amber-900 border border-amber-300';
+                let badgeText = '🪚 RÅMÅL (Mål inkl. tillæg der skal saves på afkortersaven)';
+                if (cutDisplayMode === 'net') {
+                    badgeClass = 'bg-indigo-100 text-indigo-900 border border-indigo-300';
+                    badgeText = '📐 PRÆCISE NETTOMÅL (Tegningsmål før tillæg)';
+                } else if (cutDisplayMode === 'both') {
+                    badgeClass = 'bg-blue-100 text-blue-900 border border-blue-300';
+                    badgeText = '📏 BÅDE NETTO- OG RÅMÅL';
+                }
+
+                planHTML += `
+                    <div class="mb-4 p-3 bg-white rounded-lg border border-gray-200 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Aktiv målvisning:</span>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full ${badgeClass}">
+                                ${badgeText}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1 text-xs">
+                            <span class="text-[11px] text-gray-400 mr-1 hidden sm:inline">Skift:</span>
+                            <button type="button" onclick="setCutDisplayMode('gross')" class="px-2.5 py-1 rounded font-semibold border transition ${cutDisplayMode === 'gross' ? 'bg-amber-500 text-white border-amber-600 shadow-sm' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}">🪚 Råmål</button>
+                            <button type="button" onclick="setCutDisplayMode('net')" class="px-2.5 py-1 rounded font-semibold border transition ${cutDisplayMode === 'net' ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}">📐 Præcist mål</button>
+                            <button type="button" onclick="setCutDisplayMode('both')" class="px-2.5 py-1 rounded font-semibold border transition ${cutDisplayMode === 'both' ? 'bg-blue-600 text-white border-blue-700 shadow-sm' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}">📏 Begge mål</button>
+                        </div>
+                    </div>
+                `;
+            }
+
             const sortedDimensions = Object.keys(res.plan).sort();
 
             for (const dim of sortedDimensions) {
@@ -1174,14 +1279,38 @@
                         const netW = (p.exactLength / p.cutLength) * 100;
                         const margW = (p.margin / p.cutLength) * 100;
                         
+                        let pieceMeasHTML = '';
+                        if (cutDisplayMode === 'gross') {
+                            pieceMeasHTML = `
+                                <div class="flex flex-col items-center justify-center leading-tight my-0.5" title="Skæremål inkl. tillæg: ${p.cutLength} mm">
+                                    <div class="font-mono font-bold text-[11px] text-amber-950 bg-amber-200/95 px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5">
+                                        <span>${p.cutLength} mm</span>
+                                        <span class="text-[8.5px] uppercase font-sans font-bold text-amber-800">rå</span>
+                                    </div>
+                                    <span class="text-[9.5px] text-gray-600 font-sans mt-0.5">(netto: ${p.exactLength})</span>
+                                </div>
+                            `;
+                        } else if (cutDisplayMode === 'both') {
+                            pieceMeasHTML = `
+                                <div class="flex flex-col items-center justify-center text-[10.5px] font-mono leading-tight my-0.5">
+                                    <span class="font-bold text-gray-800">${p.exactLength} mm <span class="text-[8.5px] text-gray-500 font-sans">netto</span></span>
+                                    <span class="font-bold text-amber-950 bg-amber-200/90 px-1 rounded text-[9.5px] mt-0.5">Rå: ${p.cutLength} mm</span>
+                                </div>
+                            `;
+                        } else { // 'net' or default
+                            pieceMeasHTML = `
+                                <div class="flex items-center justify-center gap-0.5 text-[11px] font-mono">
+                                    <input type="number" min="1" class="editable font-bold text-center w-12 text-[11px] p-0" value="${p.exactLength}" onchange="updatePieceLength(${p.id}, this.value)" title="Ret præcist nettomål">
+                                    <span>mm</span>
+                                </div>
+                            `;
+                        }
+
                         planHTML += `
                             <div class="piece-wrapper" style="width:${w}%; background:${pieceColors[p.id % pieceColors.length]}">
                                 <div class="piece-segment" style="width:${netW}%">
                                     <input class="editable font-bold text-center w-full text-xs" value="${p.tag}" onchange="updatePieceTag(${p.id}, this.value)" title="Ret navn">
-                                    <div class="flex items-center justify-center gap-0.5 text-[11px] font-mono">
-                                        <input type="number" min="1" class="editable font-bold text-center w-12 text-[11px] p-0" value="${p.exactLength}" onchange="updatePieceLength(${p.id}, this.value)" title="Ret længde">
-                                        <span>mm</span>
-                                    </div>
+                                    ${pieceMeasHTML}
                                 </div>
                                 ${p.margin > 0 ? `
                                 <div class="margin-segment" style="width:${margW}%;" title="Ekstra tillæg: ${p.margin} mm">
@@ -1305,6 +1434,7 @@
                     printProjectName: printProjectNameInput ? printProjectNameInput.value : '',
                     projectName: projectNameInput ? projectNameInput.value : '',
                     autoSupplement: autoSupplementCheckbox ? autoSupplementCheckbox.checked : false,
+                    cutDisplayMode: cutDisplayMode,
                     timestamp: Date.now()
                 };
                 localStorage.setItem('traeOptApp_autoDraft', JSON.stringify(draft));
@@ -1379,6 +1509,9 @@
                 if (draft.autoSupplement !== undefined && autoSupplementCheckbox) {
                     autoSupplementCheckbox.checked = draft.autoSupplement;
                 }
+                if (draft.cutDisplayMode) {
+                    cutDisplayMode = draft.cutDisplayMode;
+                }
 
                 const statusEl = document.getElementById('auto-save-text');
                 if (statusEl && draft.timestamp) {
@@ -1400,6 +1533,7 @@
                 stockLengths = [];
                 nextPieceId = 1;
                 nextStockId = 1;
+                cutDisplayMode = null;
                 if (safetyMarginInput) safetyMarginInput.value = 50;
                 if (currentMarginDisplay) currentMarginDisplay.innerText = '50 mm';
                 if (printProjectNameInput) printProjectNameInput.value = '';
@@ -1417,6 +1551,9 @@
             if (!latestOptimizationResult || requiredPieces.length === 0) {
                 alert('Tilføj mindst ét emne i sektion 2 for at generere en skæreplan før udskrift.');
                 return;
+            }
+            if (printOptDisplayMode) {
+                printOptDisplayMode.value = cutDisplayMode || 'gross';
             }
             if (printModal) {
                 printModal.classList.remove('hidden');
@@ -1440,7 +1577,8 @@
                 incShopping = true,
                 notes = '',
                 projectName = 'Træoptimerings-Projekt',
-                scale = 100
+                scale = 100,
+                displayMode = (cutDisplayMode || 'gross')
             } = options;
 
             const barH = scale < 75 ? '34px' : (scale < 85 ? '42px' : '52px');
@@ -1461,7 +1599,7 @@
                             </div>
                             <div style="text-align: right; font-size: 10px; color: #6b7280;">
                                 <div>Udskrevet: ${dateStr}</div>
-                                <div>Træoptimerings-App v3.9.4</div>
+                                <div>Træoptimerings-App v3.9.5</div>
                             </div>
                         </div>
                     </div>
@@ -1499,6 +1637,30 @@
             // 3. Visuel Skæreplan (med print-avoid-break)
             if (incPlan) {
                 html += `<div style="margin-bottom: 12px;">`;
+
+                let modeBannerText = 'RÅMÅL (Mål inkl. tillæg til afkortersav)';
+                let modeBannerBg = '#fef3c7';
+                let modeBannerBorder = '#d97706';
+                let modeBannerColor = '#92400e';
+                if (displayMode === 'net') {
+                    modeBannerText = 'PRÆCISE NETTOMÅL (Tegningsmål før tillæg)';
+                    modeBannerBg = '#eef2ff';
+                    modeBannerBorder = '#4f46e5';
+                    modeBannerColor = '#3730a3';
+                } else if (displayMode === 'both') {
+                    modeBannerText = 'BÅDE NETTO- OG RÅMÅL (Fuld oversigt)';
+                    modeBannerBg = '#eff6ff';
+                    modeBannerBorder = '#2563eb';
+                    modeBannerColor = '#1e40af';
+                }
+
+                html += `
+                    <div class="print-avoid-break" style="margin-bottom: 8px; padding: 5px 8px; background-color: ${modeBannerBg}; border: 1.5px solid ${modeBannerBorder}; border-radius: 4px; font-size: 10px; font-weight: bold; color: ${modeBannerColor}; display: flex; justify-content: space-between; align-items: center;">
+                        <span>MÅLVISNING PÅ SKÆREPLAN: ${modeBannerText}</span>
+                        <span style="font-size: 9px; font-weight: normal; opacity: 0.85;">(Afkortningstillæg: ${safetyMarginInput ? safetyMarginInput.value : 50} mm)</span>
+                    </div>
+                `;
+
                 const sortedDimensions = Object.keys(res.plan).sort();
                 for (const dim of sortedDimensions) {
                     const dimPlan = res.plan[dim];
@@ -1532,11 +1694,24 @@
                             const margW = (p.margin / p.cutLength) * 100;
                             const color = pieceColors[p.id % pieceColors.length];
 
+                            let printPieceMeasureHTML = `<span style="font-family: monospace; font-size: 8.5px; color: #111;">${p.exactLength}mm</span>`;
+                            if (displayMode === 'gross') {
+                                printPieceMeasureHTML = `
+                                    <span style="font-family: monospace; font-size: 9px; font-weight: bold; color: #92400e; background: #fef3c7; padding: 0 2px; border-radius: 2px;">${p.cutLength}mm RÅ</span>
+                                    <span style="font-size: 7.5px; color: #4b5563;">(netto: ${p.exactLength})</span>
+                                `;
+                            } else if (displayMode === 'both') {
+                                printPieceMeasureHTML = `
+                                    <span style="font-family: monospace; font-size: 8px; color: #111;">Net: <b>${p.exactLength}</b></span>
+                                    <span style="font-family: monospace; font-size: 8px; font-weight: bold; color: #92400e;">Rå: <b>${p.cutLength}</b></span>
+                                `;
+                            }
+
                             html += `
                                 <div style="display: flex; height: 100%; width: ${w}%; background: ${color}; border-right: 1px solid #374151; box-sizing: border-box; position: relative;">
                                     <div style="width: ${netW}%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; line-height: 1.1; overflow: hidden; padding: 1px;">
                                         <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; color: #111;">${p.tag}</strong>
-                                        <span style="font-family: monospace; font-size: 8.5px; color: #111;">${p.exactLength}mm</span>
+                                        ${printPieceMeasureHTML}
                                     </div>
                                     ${p.margin > 0 ? `
                                     <div style="width: ${margW}%; background: rgba(239, 68, 68, 0.25); border-left: 1px dashed rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: #991b1b;">
@@ -1643,6 +1818,7 @@
             const orientation = printOptOrientation ? printOptOrientation.value : 'portrait';
             const size = printOptSize ? printOptSize.value : 'A4';
             const scale = printOptScale ? parseInt(printOptScale.value) || 100 : 100;
+            const displayMode = (printOptDisplayMode && printOptDisplayMode.value) || cutDisplayMode || 'gross';
             const incHeader = printIncHeader ? printIncHeader.checked : true;
             const incSummary = printIncSummary ? printIncSummary.checked : true;
             const incPlan = printIncPlan ? printIncPlan.checked : true;
@@ -1658,7 +1834,7 @@
             }
 
             const html = buildPrintContentHTML(latestOptimizationResult, {
-                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation
+                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation, displayMode
             });
 
             if (printPreviewSheet) {
@@ -1676,6 +1852,7 @@
             const orientation = printOptOrientation ? printOptOrientation.value : 'portrait';
             const size = printOptSize ? printOptSize.value : 'A4';
             const scale = printOptScale ? parseInt(printOptScale.value) || 100 : 100;
+            const displayMode = (printOptDisplayMode && printOptDisplayMode.value) || cutDisplayMode || 'gross';
             const incHeader = printIncHeader ? printIncHeader.checked : true;
             const incSummary = printIncSummary ? printIncSummary.checked : true;
             const incPlan = printIncPlan ? printIncPlan.checked : true;
@@ -1687,7 +1864,7 @@
                                 'Træoptimerings-Projekt';
 
             const html = buildPrintContentHTML(latestOptimizationResult, {
-                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation
+                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation, displayMode
             });
 
             if (printRenderZone) {
@@ -1752,6 +1929,7 @@
                 stockLengths,
                 safetyMargin: safetyMarginInput.value,
                 printProjectName: printProjectNameInput.value,
+                cutDisplayMode: cutDisplayMode,
                 nextPieceId,
                 nextStockId
             };
@@ -1799,6 +1977,10 @@
                 });
                 nextStockId = sId;
 
+                if (data.cutDisplayMode) {
+                    cutDisplayMode = data.cutDisplayMode;
+                }
+
                 safetyMarginInput.value = data.safetyMargin || 50;
                 currentMarginDisplay.innerText = (data.safetyMargin || 50) + ' mm';
                 printProjectNameInput.value = data.printProjectName || '';
@@ -1832,12 +2014,13 @@
             const projectName = printProjectNameInput.value.trim() || 'trae-projekt';
             const filename = `${projectName.replace(/[^a-z0-9æøå]/gi, '_').toLowerCase()}.json`;
             const projectData = {
-                version: '3.9',
+                version: '3.9.5',
                 availableDimensions,
                 requiredPieces,
                 stockLengths,
                 safetyMargin: safetyMarginInput.value,
                 printProjectName: printProjectNameInput.value,
+                cutDisplayMode: cutDisplayMode,
                 nextPieceId,
                 nextStockId
             };
@@ -1893,6 +2076,10 @@
                         });
                     });
                     nextStockId = sId;
+
+                    if (data.cutDisplayMode) {
+                        cutDisplayMode = data.cutDisplayMode;
+                    }
 
                     safetyMarginInput.value = data.safetyMargin || 50;
                     currentMarginDisplay.innerText = (data.safetyMargin || 50) + ' mm';
