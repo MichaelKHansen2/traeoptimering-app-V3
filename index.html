@@ -353,7 +353,7 @@
     <script>
         // --- KONFIGURATION & STANDARDVÆRDIER ---
         const STANDARD_LENGTHS = [2400, 2700, 3000, 3300, 3600, 3900, 4200, 4500, 4800, 5100, 5400];
-        const STORAGE_KEY = 'traeOptAppProjects_v3';
+        const STORAGE_KEY = 'traeOptAppProjects';
 
         // Palette med afdæmpede, letgenkendelige farver til emner
         const pieceColors = ['#a5b4fc', '#f9a8d4', '#86efac', '#fcd34d', '#7dd3fc', '#c4b5fd', '#fca5a5', '#6ee7b7', '#fdba74', '#67e8f9'];
@@ -1097,14 +1097,42 @@
             const data = projects[name];
             if (data) {
                 availableDimensions = (data.availableDimensions || []).map(normalizeDim);
-                requiredPieces = (data.requiredPieces || []).map(p => ({ ...p, dimension: normalizeDim(p.dimension) }));
-                stockLengths = (data.stockLengths || []).map(s => ({ ...s, dimension: normalizeDim(s.dimension) }));
+                
+                const rawPieces = data.requiredPieces || [];
+                requiredPieces = [];
+                let pId = 1;
+                rawPieces.forEach(p => {
+                    const amt = (p.amount && p.amount > 1) ? parseInt(p.amount) : 1;
+                    for (let i = 0; i < amt; i++) {
+                        requiredPieces.push({
+                            id: pId++,
+                            dimension: normalizeDim(p.dimension),
+                            tag: (p.tag || 'Emne').trim(),
+                            length: parseInt(p.length) || 0,
+                            amount: 1,
+                            customMargin: (p.customMargin !== undefined && p.customMargin !== null) ? parseInt(p.customMargin) : null
+                        });
+                    }
+                });
+                nextPieceId = pId;
+
+                const rawStock = data.stockLengths || [];
+                stockLengths = [];
+                let sId = 1;
+                rawStock.forEach(s => {
+                    stockLengths.push({
+                        id: sId++,
+                        dimension: normalizeDim(s.dimension),
+                        length: parseInt(s.length) || 0,
+                        amount: parseInt(s.amount) || 1
+                    });
+                });
+                nextStockId = sId;
+
                 safetyMarginInput.value = data.safetyMargin || 50;
                 currentMarginDisplay.innerText = (data.safetyMargin || 50) + ' mm';
                 printProjectNameInput.value = data.printProjectName || '';
                 projectNameInput.value = name;
-                nextPieceId = data.nextPieceId || (requiredPieces.length + 1);
-                nextStockId = data.nextStockId || (stockLengths.length + 1);
                 renderAllLists();
                 triggerAutoCalculate();
                 alert(`Projektet '${name}' er indlæst.`);
@@ -1118,6 +1146,11 @@
                 const projects = getSavedProjects();
                 delete projects[name];
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+                try {
+                    const p3 = JSON.parse(localStorage.getItem('traeOptAppProjects_v3') || '{}');
+                    delete p3[name];
+                    localStorage.setItem('traeOptAppProjects_v3', JSON.stringify(p3));
+                } catch(e){}
                 populateProjectsDropdown();
             }
         }
@@ -1156,14 +1189,42 @@
                     const data = JSON.parse(evt.target.result);
                     if (!data.availableDimensions || !data.requiredPieces) throw new Error('Ugyldigt filformat.');
                     availableDimensions = (data.availableDimensions || []).map(normalizeDim);
-                    requiredPieces = (data.requiredPieces || []).map(p => ({ ...p, dimension: normalizeDim(p.dimension) }));
-                    stockLengths = (data.stockLengths || []).map(s => ({ ...s, dimension: normalizeDim(s.dimension) }));
+                    
+                    const rawPieces = data.requiredPieces || [];
+                    requiredPieces = [];
+                    let pId = 1;
+                    rawPieces.forEach(p => {
+                        const amt = (p.amount && p.amount > 1) ? parseInt(p.amount) : 1;
+                        for (let i = 0; i < amt; i++) {
+                            requiredPieces.push({
+                                id: pId++,
+                                dimension: normalizeDim(p.dimension),
+                                tag: (p.tag || 'Emne').trim(),
+                                length: parseInt(p.length) || 0,
+                                amount: 1,
+                                customMargin: (p.customMargin !== undefined && p.customMargin !== null) ? parseInt(p.customMargin) : null
+                            });
+                        }
+                    });
+                    nextPieceId = pId;
+
+                    const rawStock = data.stockLengths || [];
+                    stockLengths = [];
+                    let sId = 1;
+                    rawStock.forEach(s => {
+                        stockLengths.push({
+                            id: sId++,
+                            dimension: normalizeDim(s.dimension),
+                            length: parseInt(s.length) || 0,
+                            amount: parseInt(s.amount) || 1
+                        });
+                    });
+                    nextStockId = sId;
+
                     safetyMarginInput.value = data.safetyMargin || 50;
                     currentMarginDisplay.innerText = (data.safetyMargin || 50) + ' mm';
                     printProjectNameInput.value = data.printProjectName || '';
                     projectNameInput.value = data.printProjectName || '';
-                    nextPieceId = data.nextPieceId || (requiredPieces.length + 1);
-                    nextStockId = data.nextStockId || (stockLengths.length + 1);
                     renderAllLists();
                     triggerAutoCalculate();
                     alert('Projektfilen er indlæst.');
@@ -1185,7 +1246,11 @@
         }
 
         function getSavedProjects() {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            let p1 = {};
+            let p2 = {};
+            try { p1 = JSON.parse(localStorage.getItem('traeOptAppProjects') || '{}'); } catch(e){}
+            try { p2 = JSON.parse(localStorage.getItem('traeOptAppProjects_v3') || '{}'); } catch(e){}
+            return { ...p1, ...p2 };
         }
 
         function populateProjectsDropdown() {
