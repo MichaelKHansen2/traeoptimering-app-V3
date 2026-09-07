@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Træoptimerings-App v4.0.0</title>
+    <title>Træoptimerings-App v4.1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,7 +163,7 @@
 
     <div class="max-w-7xl mx-auto print-container">
         <header class="text-center mb-6 print-hide">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v4.0.0</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v4.1.0</h1>
             <p class="text-gray-600 mt-1 text-sm md:text-base">Mængdeberegning, Deling, Udskrift & Bæredygtighedsanalyse</p>
             <div class="flex items-center justify-center gap-3 mt-2 flex-wrap">
                 <span id="version-info" class="text-xs text-gray-400"></span>
@@ -175,7 +175,7 @@
                 <span class="text-gray-300">&bull;</span>
                 <button id="force-reload-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition shadow-sm" title="Tvinger browseren til at hente den nyeste version og rydde eventuel gammel browser-cache">
                     <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Opdater app (v4.0.0)</span>
+                    <span>Opdater app (v4.1.0)</span>
                 </button>
             </div>
         </header>
@@ -804,7 +804,7 @@
         });
 
         // Opdater versionsdato automatisk
-        document.getElementById('version-info').innerHTML = "Version 4.0.0 &bull; Sidst opdateret: " + document.lastModified;
+        document.getElementById('version-info').innerHTML = "Version 4.1.0 &bull; Sidst opdateret: " + document.lastModified;
 
         // --- LIVE BEREGNINGSTRIGGER ---
         function triggerAutoCalculate() {
@@ -1715,7 +1715,7 @@
             try {
                 const raw = localStorage.getItem('traeOptApp_printFavorite');
                 if (!raw) {
-                    alert('Du har ikke gemt en favorit endnu.\n\nVælg dine ønskede indstillinger i menuen og tryk på "Gem som favorit", så husker appen dine valg fremover.');
+                    alert('Du har ikke gemt en favorit endnu.\n\nIndstil dine ønskede valg og tryk på "Gem som favorit", så husker appen dine valg fremover.');
                     return;
                 }
                 const fav = JSON.parse(raw);
@@ -1810,7 +1810,7 @@
             }
             currentPreviewPageIndex = 0; // Nulstil altid til side 1 ved åbning
 
-            // Genindlæs automatisk enten seneste valg eller gemt favorit
+            // Genindlæs automatisk seneste valg eller favorit
             try {
                 const saved = localStorage.getItem('traeOptApp_lastPrintSettings') || localStorage.getItem('traeOptApp_printFavorite');
                 if (saved) {
@@ -1911,7 +1911,7 @@
             const sFactor = Math.max(0.55, Math.min(1.0, (scale / 100) * (isA3 ? 0.90 : 1.0)));
 
             // Proportionale dimensioner baseret på indholdsskalering
-            const barH = Math.max(22, Math.round(48 * sFactor)) + 'px';
+            const barH = Math.max(22, Math.round(46 * sFactor)) + 'px';
             const mbSection = Math.max(4, Math.round(10 * sFactor)) + 'px';
             const mbItem = Math.max(2, Math.round(6 * sFactor)) + 'px';
             const padBox = `${Math.max(3, Math.round(6 * sFactor))}px ${Math.max(5, Math.round(10 * sFactor))}px`;
@@ -1926,22 +1926,22 @@
                 year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             });
 
-            // Kapacitetsbudget i relative højdeenheder
-            let pageBudget = 260; // Standard A4 portrait
-            if (size === 'A4' && isLandscape) pageBudget = 165;
-            else if (size === 'A3' && !isLandscape) pageBudget = 370;
-            else if (size === 'A3' && isLandscape) pageBudget = 250;
+            // Kalibreret kapacitetsbudget svarende til fysiske A4/A3 ark
+            let pageBudget = 230; // A4 Portrait (plads til ~15 bjælker eller 1 bjælkegruppe + 10 rækker)
+            if (size === 'A4' && isLandscape) pageBudget = 145;
+            else if (size === 'A3' && !isLandscape) pageBudget = 340;
+            else if (size === 'A3' && isLandscape) pageBudget = 220;
 
             // Enhedshøjder (skaleret med sFactor)
-            const H_HEADER_P1 = incHeader ? 22 * sFactor : 0;
-            const H_HEADER_PX = 10 * sFactor;
+            const H_HEADER_P1 = incHeader ? 24 * sFactor : 0;
+            const H_HEADER_PX = 12 * sFactor;
             const H_SUMMARY = incSummary ? 26 * sFactor : 0;
-            const H_PLAN_BANNER = incPlan ? 8 * sFactor : 0;
-            const H_DIM_HEADER = 9 * sFactor;
-            const H_STOCK_BAR = 18 * sFactor;
-            const H_TABLE_HDR = 10 * sFactor;
-            const H_TABLE_ROW = 4.5 * sFactor;
-            const H_SHOPPING = incShopping ? 20 * sFactor : 0;
+            const H_PLAN_BANNER = incPlan ? 10 * sFactor : 0;
+            const H_DIM_HEADER = 10 * sFactor;
+            const H_STOCK_BAR = 21 * sFactor;
+            const H_TABLE_HDR = 14 * sFactor;
+            const H_TABLE_ROW = 5.8 * sFactor;
+            const H_SHOPPING = incShopping ? 22 * sFactor : 0;
 
             const pages = [];
             let currentPageItems = [];
@@ -2147,7 +2147,11 @@
                 }
 
                 if (partsRows.length > 0) {
-                    if (curH + H_TABLE_HDR + (H_TABLE_ROW * 3) > pageBudget && currentPageItems.length > 0) finishPage();
+                    // Hvis der ikke er plads til mindst 8 rækker af stykklisten på denne side, skift rent til næste side
+                    const remainingSpace = pageBudget - curH;
+                    if (remainingSpace < H_TABLE_HDR + (H_TABLE_ROW * 8) && currentPageItems.length > 0) {
+                        finishPage();
+                    }
 
                     let tableChunkRows = [];
                     for (let r = 0; r < partsRows.length; r++) {
@@ -2225,7 +2229,7 @@
                                 </div>
                                 <div style="text-align: right; font-size: ${smallFs}; color: #4b5563; flex-shrink: 0;">
                                     <div><strong>Udskrevet:</strong> ${dateStr}</div>
-                                    <div style="font-size: ${miniFs}; color: #9ca3af; margin-top: 1px;">Træoptimerings-App v4.0.0</div>
+                                    <div style="font-size: ${miniFs}; color: #9ca3af; margin-top: 1px;">Træoptimerings-App v4.1.0</div>
                                 </div>
                             </div>
                         </div>
@@ -2241,7 +2245,7 @@
 
                 const pageFooterHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e5e7eb; padding-top: 3px; margin-top: auto; font-size: ${miniFs}; color: #9ca3af;">
-                        <span>Træoptimerings-App v4.0.0</span>
+                        <span>Træoptimerings-App v4.1.0</span>
                         <span style="font-weight: 600; color: #4b5563;">Side ${pageNum} af ${totalPages}</span>
                     </div>
                 `;
@@ -2293,12 +2297,12 @@
                 previewNextPageBtn.style.opacity = previewNextPageBtn.disabled ? '0.35' : '1';
             }
 
-            // Måldimensioner for et realistisk papirark
+            // Måldimensioner for et realistisk papirark (A4: 210 x 297 mm, A3: 297 x 420 mm)
             const targetW = isLandscape ? (isA3 ? 980 : 820) : (isA3 ? 720 : 620);
             const targetH = isLandscape ? Math.round(targetW * 210 / 297) : Math.round(targetW * 297 / 210);
 
             if (previewViewMode === 'all') {
-                // Rul alle sider sekventielt
+                // Rul alle sider sekventielt med tydelig papiradskillelse
                 if (printPreviewContainer) {
                     printPreviewContainer.style.width = '100%';
                     printPreviewContainer.style.height = 'auto';
@@ -2307,7 +2311,7 @@
 
                 const multiHTML = lastGeneratedPages.map((pageHtml, idx) => {
                     return `
-                        <div class="preview-page-card" style="background: white; border: 1.5px solid #94a3b8; border-radius: 4px; box-shadow: 0 8px 20px -3px rgba(0,0,0,0.18); padding: ${isLandscape ? '20px 26px' : '24px 26px'}; margin-bottom: 24px; box-sizing: border-box; width: 100%; max-width: ${targetW}px; margin-left: auto; margin-right: auto; min-height: ${targetH}px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div class="preview-page-card" style="background: white; border: 1.5px solid #94a3b8; border-radius: 4px; box-shadow: 0 8px 24px -4px rgba(0,0,0,0.20); padding: ${isLandscape ? '20px 26px' : '24px 26px'}; margin-bottom: 24px; box-sizing: border-box; width: 100%; max-width: ${targetW}px; margin-left: auto; margin-right: auto; min-height: ${targetH}px; display: flex; flex-direction: column; justify-content: space-between;">
                             ${pageHtml}
                         </div>
                     `;
@@ -2322,7 +2326,7 @@
                 printPreviewSheet.style.width = '100%';
                 printPreviewSheet.style.transform = 'none';
             } else {
-                // Enkelt side visning med proportional skalering så INTET klippes
+                // Enkelt side visning med ægte sideskift
                 printPreviewSheet.innerHTML = lastGeneratedPages[currentPreviewPageIndex];
                 printPreviewSheet.style.background = '#ffffff';
                 printPreviewSheet.style.border = '1.5px solid #94a3b8';
@@ -2348,6 +2352,7 @@
                     printPreviewSheet.style.transformOrigin = 'top left';
                     printPreviewSheet.style.overflow = 'hidden';
                 } else {
+                    // Fuld bredde: Vis arket i fuld skala og lad det være nøjagtigt ét ark højt
                     if (printPreviewContainer) {
                         printPreviewContainer.style.width = '100%';
                         printPreviewContainer.style.height = 'auto';
@@ -2419,7 +2424,7 @@
                 }
 
                 renderCurrentPreviewSheet();
-                saveLastPrintSettings(); // Gem altid automatisk seneste valg
+                saveLastPrintSettings(); // Gem automatisk seneste layout-valg
             } catch (err) {
                 console.error('Fejl under opdatering af print-forhåndsvisning:', err);
                 if (printPreviewSheet) {
@@ -2621,7 +2626,7 @@
             const projectName = printProjectNameInput.value.trim() || 'trae-projekt';
             const filename = `${projectName.replace(/[^a-z0-9æøå]/gi, '_').toLowerCase()}.json`;
             const projectData = {
-                version: '4.0.0',
+                version: '4.1.0',
                 availableDimensions,
                 requiredPieces,
                 stockLengths,
