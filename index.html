@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Træoptimerings-App v3.9.5</title>
+    <title>Træoptimerings-App v3.9.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,7 +163,7 @@
 
     <div class="max-w-7xl mx-auto print-container">
         <header class="text-center mb-6 print-hide">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.5</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.6</h1>
             <p class="text-gray-600 mt-1 text-sm md:text-base">Mængdeberegning, Deling, Udskrift & Bæredygtighedsanalyse</p>
             <div class="flex items-center justify-center gap-3 mt-2 flex-wrap">
                 <span id="version-info" class="text-xs text-gray-400"></span>
@@ -175,7 +175,7 @@
                 <span class="text-gray-300">&bull;</span>
                 <button id="force-reload-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition shadow-sm" title="Tvinger browseren til at hente den nyeste version og rydde eventuel gammel browser-cache">
                     <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Opdater app (v3.9.5)</span>
+                    <span>Opdater app (v3.9.6)</span>
                 </button>
             </div>
         </header>
@@ -366,12 +366,12 @@
     <div id="print-render-zone" class="hidden"></div>
 
     <!-- PRINT & PDF OPSÆTNINGS MODAL -->
-    <div id="print-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden p-3 md:p-6 print-hide">
-        <div class="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-gray-200">
+    <div id="print-modal" class="fixed inset-0 z-[99999] overflow-y-auto bg-black/65 backdrop-blur-sm hidden p-2 sm:p-4 md:p-6 print-hide flex justify-center items-start" style="-webkit-overflow-scrolling: touch;">
+        <div id="print-modal-box" class="relative bg-white rounded-xl shadow-2xl max-w-5xl w-full my-2 md:my-5 flex flex-col overflow-hidden border border-gray-200 max-h-[94vh] transition-all duration-150">
             <!-- Modal Header -->
-            <div class="px-6 py-3.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <div class="px-5 py-3.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between shrink-0">
                 <div class="flex items-center gap-2.5">
-                    <div class="p-2 bg-indigo-100 text-indigo-700 rounded-lg">
+                    <div class="p-2 bg-indigo-100 text-indigo-700 rounded-lg shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
@@ -381,18 +381,18 @@
                         <p class="text-xs text-gray-500">Styr papirretning, skalering og vælg hvilket indhold der skal udskrives</p>
                     </div>
                 </div>
-                <button id="close-print-modal-btn" type="button" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-200 transition">
+                <button id="close-print-modal-btn" type="button" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-200 transition" title="Luk (Esc)">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
 
             <!-- Modal Content Grid -->
-            <div class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-gray-50/50">
-                <!-- Venstre side: Indstillinger (5 kolonner) -->
-                <div class="lg:col-span-5 space-y-4">
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 gap-5 bg-gray-50/50 custom-scrollbar">
+                <!-- Venstre side: Indstillinger (5 kolonner på md+) -->
+                <div class="md:col-span-5 space-y-3.5">
                     <!-- 1. Papir & Retning -->
-                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Papirformat & Retning
                         </h4>
@@ -400,8 +400,8 @@
                             <div>
                                 <label for="print-opt-orientation" class="block font-medium text-gray-600 mb-1">Papirretning</label>
                                 <select id="print-opt-orientation" class="w-full p-2 rounded border border-gray-300 bg-white font-medium focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="portrait" selected>Stående (Højformat - A4)</option>
-                                    <option value="landscape">Liggende (Tværformat - Anbefalet til bjælker)</option>
+                                    <option value="portrait" selected>Stående (Højformat)</option>
+                                    <option value="landscape">Liggende (Tværformat)</option>
                                 </select>
                             </div>
                             <div>
@@ -415,7 +415,7 @@
                     </div>
 
                     <!-- 1b. Målvisning på print -->
-                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm">
                         <label for="print-opt-display-mode" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242L11.758 4.757a3 3 0 014.242 0l2.879 2.879a3 3 0 010 4.242z"></path></svg>
                             Målvisning på Skæreplan (Print)
@@ -428,7 +428,7 @@
                     </div>
 
                     <!-- 2. Skalering & Kompakthed -->
-                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm">
                         <div class="flex items-center justify-between mb-1.5">
                             <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider">Skalering af indhold</h4>
                             <span id="print-scale-value" class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">100% (Normal)</span>
@@ -448,8 +448,8 @@
                     </div>
 
                     <!-- 3. Vælg sektioner på print -->
-                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5">Vælg indhold til print</h4>
+                    <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Vælg indhold til print</h4>
                         <div class="space-y-2 text-xs">
                             <label class="flex items-center gap-2.5 cursor-pointer select-none">
                                 <input type="checkbox" id="print-inc-header" checked class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
@@ -475,20 +475,20 @@
                     </div>
 
                     <!-- 4. Noter / Elev / Hold -->
-                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm">
                         <label for="print-notes-input" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Elev / Hold / Noter (vises i toppen)</label>
                         <input type="text" id="print-notes-input" placeholder="f.eks. Elev: Jens Hansen &bull; Tømrerhold T2" class="w-full text-xs p-2 rounded border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                 </div>
 
-                <!-- Højre side: Live Forhåndsvisning (7 kolonner) -->
-                <div class="lg:col-span-7 flex flex-col">
+                <!-- Højre side: Live Forhåndsvisning (7 kolonner på md+) -->
+                <div class="md:col-span-7 flex flex-col min-h-[350px]">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-bold text-gray-700 uppercase tracking-wider">Live Forhåndsvisning</span>
                         <span class="text-[11px] text-gray-400">Opdateres automatisk</span>
                     </div>
-                    <div class="flex-1 bg-gray-200/80 p-3 md:p-4 rounded-xl border border-gray-300 overflow-y-auto max-h-[520px] flex justify-center items-start shadow-inner">
-                        <div id="print-preview-sheet" class="bg-white shadow-xl p-5 md:p-7 rounded text-gray-900 border border-gray-300 text-xs w-full transition-all duration-150">
+                    <div class="flex-1 bg-gray-200/80 p-2.5 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-y-auto max-h-[500px] flex justify-center items-start shadow-inner custom-scrollbar">
+                        <div id="print-preview-sheet" class="bg-white shadow-xl p-4 sm:p-5 md:p-7 rounded text-gray-900 border border-gray-300 text-xs w-full transition-all duration-150">
                             <!-- Indhold udfyldes dynamisk af JS -->
                         </div>
                     </div>
@@ -496,7 +496,7 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between flex-wrap gap-2">
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between flex-wrap gap-2 shrink-0">
                 <div class="text-xs text-gray-500 flex items-center gap-1.5">
                     <span class="text-emerald-600 font-bold">✓ 100% brudsikker:</span>
                     <span>Bjælker overskæres aldrig af sideskift.</span>
@@ -615,6 +615,21 @@
         if (cancelPrintBtn) cancelPrintBtn.addEventListener('click', closePrintModal);
         if (executePrintBtn) executePrintBtn.addEventListener('click', executePrint);
 
+        // Luk ved klik på mørk baggrund
+        if (printModal) {
+            printModal.addEventListener('click', (e) => {
+                if (e.target === printModal) {
+                    closePrintModal();
+                }
+            });
+        }
+        // Luk ved tryk på Escape-tasten
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && printModal && !printModal.classList.contains('hidden')) {
+                closePrintModal();
+            }
+        });
+
         [printOptOrientation, printOptSize, printIncHeader, printIncSummary, printIncPlan, printIncParts, printIncShopping, printOptDisplayMode].forEach(el => {
             if (el) el.addEventListener('change', updatePrintPreview);
         });
@@ -665,7 +680,7 @@
         });
 
         // Opdater versionsdato automatisk
-        document.getElementById('version-info').innerHTML = "Version 3.9.5 &bull; Sidst opdateret: " + document.lastModified;
+        document.getElementById('version-info').innerHTML = "Version 3.9.6 &bull; Sidst opdateret: " + document.lastModified;
 
         // --- LIVE BEREGNINGSTRIGGER ---
         function triggerAutoCalculate() {
@@ -1547,7 +1562,7 @@
         }
 
         // --- PRINT LAYOUT MODAL & GENERERING ---
-        function openPrintModal() {
+        function openPrintModal(e) {
             if (!latestOptimizationResult || requiredPieces.length === 0) {
                 alert('Tilføj mindst ét emne i sektion 2 for at generere en skæreplan før udskrift.');
                 return;
@@ -1557,6 +1572,26 @@
             }
             if (printModal) {
                 printModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+
+                // Intelligent synlighed i iframes & ved scroll
+                const modalBox = document.getElementById('print-modal-box');
+                if (modalBox) {
+                    // Hvis vi befinder os i en auto-resized Moodle iframe med stor højde (hvor parent scroller)
+                    if (window.self !== window.top && window.innerHeight > 1200) {
+                        const triggerBtn = document.getElementById('print-btn-desktop');
+                        const triggerY = triggerBtn ? triggerBtn.offsetTop : 100;
+                        modalBox.style.marginTop = Math.max(16, triggerY - 60) + 'px';
+                    } else {
+                        modalBox.style.marginTop = '';
+                    }
+
+                    printModal.scrollTop = 0;
+                    try {
+                        modalBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } catch (err) {}
+                }
+
                 updatePrintPreview();
             }
         }
@@ -1564,6 +1599,7 @@
         function closePrintModal() {
             if (printModal) {
                 printModal.classList.add('hidden');
+                document.body.style.overflow = '';
             }
         }
 
@@ -1599,7 +1635,7 @@
                             </div>
                             <div style="text-align: right; font-size: 10px; color: #6b7280;">
                                 <div>Udskrevet: ${dateStr}</div>
-                                <div>Træoptimerings-App v3.9.5</div>
+                                <div>Træoptimerings-App v3.9.6</div>
                             </div>
                         </div>
                     </div>
@@ -1747,14 +1783,19 @@
                     const dimPlan = res.plan[dim];
                     dimPlan.forEach((board, bIdx) => {
                         board.pieces.forEach(p => {
+                            const exactLen = p.exactLength !== undefined ? p.exactLength : (p.length || 0);
+                            const cutLen = p.cutLength !== undefined ? p.cutLength : (exactLen + (p.margin || 0));
+                            const marginVal = p.margin !== undefined ? p.margin : 0;
+                            const tagVal = p.tag || 'Emne';
+
                             rows += `
                                 <tr style="border-bottom: 1px solid #e5e7eb;">
                                     <td style="padding: 4px 6px; text-align: center; border-right: 1px solid #e5e7eb; font-family: monospace; font-size: 11px; color: #374151;">[ ]</td>
-                                    <td style="padding: 4px 6px; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${itemNum++}. ${p.tag}</td>
+                                    <td style="padding: 4px 6px; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${itemNum++}. ${tagVal}</td>
                                     <td style="padding: 4px 6px; border-right: 1px solid #e5e7eb; font-family: monospace;">${dim}</td>
-                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">${p.exactLength} mm</td>
-                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb; color: #dc2626;">+${p.margin} mm</td>
-                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${p.cutLength} mm</td>
+                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb;">${exactLen} mm</td>
+                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb; color: #dc2626;">+${marginVal} mm</td>
+                                    <td style="padding: 4px 6px; text-align: right; border-right: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${cutLen} mm</td>
                                     <td style="padding: 4px 6px; text-align: center; color: #4b5563;">Bræt #${bIdx + 1} (${board.originalLength}mm)</td>
                                 </tr>
                             `;
@@ -1814,33 +1855,42 @@
         }
 
         function updatePrintPreview() {
-            if (!latestOptimizationResult) return;
-            const orientation = printOptOrientation ? printOptOrientation.value : 'portrait';
-            const size = printOptSize ? printOptSize.value : 'A4';
-            const scale = printOptScale ? parseInt(printOptScale.value) || 100 : 100;
-            const displayMode = (printOptDisplayMode && printOptDisplayMode.value) || cutDisplayMode || 'gross';
-            const incHeader = printIncHeader ? printIncHeader.checked : true;
-            const incSummary = printIncSummary ? printIncSummary.checked : true;
-            const incPlan = printIncPlan ? printIncPlan.checked : true;
-            const incParts = printIncParts ? printIncParts.checked : true;
-            const incShopping = printIncShopping ? printIncShopping.checked : true;
-            const notes = printNotesInput ? printNotesInput.value.trim() : '';
-            const projectName = (printProjectNameInput && printProjectNameInput.value.trim()) || 
-                                (projectNameInput && projectNameInput.value.trim()) || 
-                                'Træoptimerings-Projekt';
+            try {
+                if (!latestOptimizationResult) return;
+                const orientation = printOptOrientation ? printOptOrientation.value : 'portrait';
+                const size = printOptSize ? printOptSize.value : 'A4';
+                const scale = printOptScale ? parseInt(printOptScale.value) || 100 : 100;
+                const displayMode = (printOptDisplayMode && printOptDisplayMode.value) || cutDisplayMode || 'gross';
+                const incHeader = printIncHeader ? printIncHeader.checked : true;
+                const incSummary = printIncSummary ? printIncSummary.checked : true;
+                const incPlan = printIncPlan ? printIncPlan.checked : true;
+                const incParts = printIncParts ? printIncParts.checked : true;
+                const incShopping = printIncShopping ? printIncShopping.checked : true;
+                const notes = printNotesInput ? printNotesInput.value.trim() : '';
+                const projectName = (printProjectNameInput && printProjectNameInput.value.trim()) || 
+                                    (projectNameInput && projectNameInput.value.trim()) || 
+                                    'Træoptimerings-Projekt';
 
-            if (printScaleValue) {
-                printScaleValue.innerText = `${scale}% (${scale >= 95 ? 'Normal' : scale >= 80 ? 'Kompakt' : 'Få sider'})`;
-            }
+                if (printScaleValue) {
+                    printScaleValue.innerText = `${scale}% (${scale >= 95 ? 'Normal' : scale >= 80 ? 'Kompakt' : 'Få sider'})`;
+                }
 
-            const html = buildPrintContentHTML(latestOptimizationResult, {
-                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation, displayMode
-            });
+                const html = buildPrintContentHTML(latestOptimizationResult, {
+                    incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation, displayMode
+                });
 
-            if (printPreviewSheet) {
-                printPreviewSheet.innerHTML = html;
-                printPreviewSheet.style.maxWidth = orientation === 'landscape' ? '100%' : '560px';
-                printPreviewSheet.style.zoom = String((scale / 100) * 0.95);
+                if (printPreviewSheet) {
+                    printPreviewSheet.innerHTML = html;
+                    printPreviewSheet.style.maxWidth = orientation === 'landscape' ? '100%' : '560px';
+                    printPreviewSheet.style.zoom = String((scale / 100) * 0.95);
+                }
+            } catch (err) {
+                console.error('Fejl under opdatering af print-forhåndsvisning:', err);
+                if (printPreviewSheet) {
+                    printPreviewSheet.innerHTML = `<div style="padding: 12px; color: #b91c1c; background: #fee2e2; border-radius: 6px; font-size: 11px;">
+                        <strong>Forhåndsvisningsfejl:</strong> ${err.message}
+                    </div>`;
+                }
             }
         }
 
@@ -2014,7 +2064,7 @@
             const projectName = printProjectNameInput.value.trim() || 'trae-projekt';
             const filename = `${projectName.replace(/[^a-z0-9æøå]/gi, '_').toLowerCase()}.json`;
             const projectData = {
-                version: '3.9.5',
+                version: '3.9.6',
                 availableDimensions,
                 requiredPieces,
                 stockLengths,
