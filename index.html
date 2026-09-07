@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Træoptimerings-App v4.1.0</title>
+    <title>Træoptimerings-App v4.1.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -539,12 +539,12 @@
                             <button id="preview-view-mode-btn" type="button" class="px-2 py-1 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-lg text-[11px] font-semibold shadow-2xs transition" title="Skift mellem at bladre i én side ad gangen eller rulle igennem alle sider">
                                 📄 Enkelt side
                             </button>
-                            <button id="preview-zoom-fit-btn" type="button" class="px-2 py-1 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-lg text-[11px] font-semibold shadow-2xs transition" title="Tilpas hele siden til forhåndsvisningsvinduet">
-                                🔍 Tilpas vindue
+                            <button id="preview-zoom-fit-btn" type="button" class="px-2 py-1 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-lg text-[11px] font-semibold shadow-2xs transition" title="Zoom ud for at overskue hele arket på én gang">
+                                🔍 Hele arket
                             </button>
                         </div>
                     </div>
-                    <div id="print-preview-viewport" class="flex-1 bg-gray-200/90 p-2 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-auto max-h-[550px] min-h-[460px] shadow-inner custom-scrollbar flex justify-center items-start">
+                    <div id="print-preview-viewport" class="flex-1 bg-gray-200/90 p-2 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-auto min-h-[380px] md:min-h-[560px] max-h-[75vh] md:max-h-[720px] shadow-inner custom-scrollbar flex justify-center items-start">
                         <div id="print-preview-container" class="relative transition-all duration-150 flex justify-center items-start">
                             <div id="print-preview-sheet" class="bg-white shadow-2xl rounded text-gray-900 border border-gray-300 text-xs box-border">
                                 <!-- Indhold udfyldes dynamisk af JS -->
@@ -672,7 +672,7 @@
 
         let currentPreviewPageIndex = 0;
         let previewViewMode = 'single'; // 'single' eller 'all'
-        let previewFitToWindow = true; // true = arket tilpasses så det er 100% synligt i vinduet
+        let previewFitToWindow = false; // false = 'Tilpas bredde' (naturlig læsevenlig papirbredde som standard)
         let lastGeneratedPages = [];
 
         // --- EVENT LISTENERS ---
@@ -722,7 +722,6 @@
         if (previewZoomFitBtn) {
             previewZoomFitBtn.addEventListener('click', () => {
                 previewFitToWindow = !previewFitToWindow;
-                previewZoomFitBtn.innerText = previewFitToWindow ? '🔍 Tilpas vindue' : '🔍 Fuld bredde';
                 renderCurrentPreviewSheet();
             });
         }
@@ -2297,6 +2296,14 @@
                 previewNextPageBtn.style.opacity = previewNextPageBtn.disabled ? '0.35' : '1';
             }
 
+            // Opdater knaptekst for zoom / tilpasning
+            if (previewZoomFitBtn) {
+                previewZoomFitBtn.innerText = previewFitToWindow ? '🔍 Tilpas bredde' : '🔍 Hele arket';
+                previewZoomFitBtn.title = previewFitToWindow 
+                    ? 'Zoom ind til naturlig, læsevenlig papirbredde' 
+                    : 'Zoom ud for at overskue hele arket på én gang';
+            }
+
             // Måldimensioner for et realistisk papirark (A4: 210 x 297 mm, A3: 297 x 420 mm)
             const targetW = isLandscape ? (isA3 ? 980 : 820) : (isA3 ? 720 : 620);
             const targetH = isLandscape ? Math.round(targetW * 210 / 297) : Math.round(targetW * 297 / 210);
@@ -2312,6 +2319,10 @@
                 const multiHTML = lastGeneratedPages.map((pageHtml, idx) => {
                     return `
                         <div class="preview-page-card" style="background: white; border: 1.5px solid #94a3b8; border-radius: 4px; box-shadow: 0 8px 24px -4px rgba(0,0,0,0.20); padding: ${isLandscape ? '20px 26px' : '24px 26px'}; margin-bottom: 24px; box-sizing: border-box; width: 100%; max-width: ${targetW}px; margin-left: auto; margin-right: auto; min-height: ${targetH}px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6366f1; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                                <span>Ark ${idx + 1} af ${lastGeneratedPages.length}</span>
+                                <span>${size} ${isLandscape ? 'Liggende' : 'Stående'}</span>
+                            </div>
                             ${pageHtml}
                         </div>
                     `;
@@ -2337,33 +2348,42 @@
 
                 if (previewFitToWindow) {
                     const vp = document.getElementById('print-preview-viewport');
-                    const availH = Math.max(380, (vp ? vp.clientHeight : 480) - 24);
-                    const availW = Math.max(300, (vp ? vp.clientWidth : 520) - 24);
+                    const availH = Math.max(380, (vp ? vp.clientHeight : 560) - 28);
+                    const availW = Math.max(300, (vp ? vp.clientWidth : 600) - 28);
                     const scaleFactor = Math.min(availW / targetW, availH / targetH, 1.0);
 
                     if (printPreviewContainer) {
                         printPreviewContainer.style.width = Math.round(targetW * scaleFactor) + 'px';
                         printPreviewContainer.style.height = Math.round(targetH * scaleFactor) + 'px';
                         printPreviewContainer.style.overflow = 'hidden';
+                        printPreviewContainer.style.margin = '0 auto';
                     }
                     printPreviewSheet.style.width = targetW + 'px';
                     printPreviewSheet.style.height = targetH + 'px';
+                    printPreviewSheet.style.minHeight = targetH + 'px';
+                    printPreviewSheet.style.aspectRatio = isLandscape ? (isA3 ? '420 / 297' : '297 / 210') : (isA3 ? '297 / 420' : '210 / 297');
                     printPreviewSheet.style.transform = `scale(${scaleFactor})`;
                     printPreviewSheet.style.transformOrigin = 'top left';
                     printPreviewSheet.style.overflow = 'hidden';
+                    printPreviewSheet.style.margin = '0';
                 } else {
-                    // Fuld bredde: Vis arket i fuld skala og lad det være nøjagtigt ét ark højt
+                    // Tilpas bredde (standard): Flot naturlig papirbredde med korrekte papirproportioner
                     if (printPreviewContainer) {
                         printPreviewContainer.style.width = '100%';
                         printPreviewContainer.style.height = 'auto';
                         printPreviewContainer.style.overflow = 'visible';
+                        printPreviewContainer.style.display = 'flex';
+                        printPreviewContainer.style.justifyContent = 'center';
+                        printPreviewContainer.style.margin = '0 auto';
                     }
                     printPreviewSheet.style.width = targetW + 'px';
                     printPreviewSheet.style.maxWidth = '100%';
                     printPreviewSheet.style.height = 'auto';
                     printPreviewSheet.style.minHeight = targetH + 'px';
+                    printPreviewSheet.style.aspectRatio = isLandscape ? (isA3 ? '420 / 297' : '297 / 210') : (isA3 ? '297 / 420' : '210 / 297');
                     printPreviewSheet.style.transform = 'none';
                     printPreviewSheet.style.overflow = 'visible';
+                    printPreviewSheet.style.margin = '0 auto';
                 }
             }
         }
@@ -2626,7 +2646,7 @@
             const projectName = printProjectNameInput.value.trim() || 'trae-projekt';
             const filename = `${projectName.replace(/[^a-z0-9æøå]/gi, '_').toLowerCase()}.json`;
             const projectData = {
-                version: '4.1.0',
+                version: '4.1.1',
                 availableDimensions,
                 requiredPieces,
                 stockLengths,
