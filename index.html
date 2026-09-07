@@ -390,6 +390,38 @@
             <div class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 gap-5 bg-gray-50/50 custom-scrollbar">
                 <!-- Venstre side: Indstillinger (5 kolonner på md+) -->
                 <div class="md:col-span-5 space-y-3.5">
+                    <!-- Hurtigvalg & Favorit -->
+                    <div class="bg-gradient-to-r from-amber-50 to-indigo-50 p-3 rounded-lg border border-amber-200/80 shadow-2xs">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                                <span class="text-amber-500 text-sm">★</span> Favorit & Hurtigvalg
+                            </span>
+                            <span id="favorite-saved-badge" class="hidden text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold transition">
+                                ✓ Favorit gemt!
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <button id="apply-favorite-btn" type="button" class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md bg-white border border-amber-300 hover:bg-amber-100/60 text-amber-900 font-bold shadow-2xs transition cursor-pointer" title="Indlæs dit gemte favorit-layout">
+                                <span>★</span> Anvend favorit
+                            </button>
+                            <button id="save-favorite-btn" type="button" class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-2xs transition cursor-pointer" title="Gem de aktuelle indstillinger som din favorit">
+                                <span>💾</span> Gem som favorit
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-amber-200/60 text-[11px] text-gray-600 flex-wrap">
+                            <span class="font-semibold text-gray-500">Skabeloner:</span>
+                            <button id="preset-workshop-btn" type="button" class="px-2 py-0.5 bg-white hover:bg-gray-100 border border-gray-300 rounded text-gray-700 font-medium transition cursor-pointer" title="Visuel plan + stykkliste på 1 side (60% skalering)">
+                                🔨 Værksted (1 side)
+                            </button>
+                            <button id="preset-full-btn" type="button" class="px-2 py-0.5 bg-white hover:bg-gray-100 border border-gray-300 rounded text-gray-700 font-medium transition cursor-pointer" title="Alt indhold slået til (100% skalering)">
+                                📋 Fuld rapport
+                            </button>
+                            <button id="preset-plan-only-btn" type="button" class="px-2 py-0.5 bg-white hover:bg-gray-100 border border-gray-300 rounded text-gray-700 font-medium transition cursor-pointer" title="Kun de farvede skærebjælker">
+                                📐 Kun skæreplan
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- 1. Papir & Retning -->
                     <div class="bg-white p-3.5 rounded-lg border border-gray-200 shadow-sm">
                         <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -512,9 +544,11 @@
                             </button>
                         </div>
                     </div>
-                    <div id="print-preview-viewport" class="flex-1 bg-gray-200/90 p-2 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-auto max-h-[550px] min-h-[460px] shadow-inner custom-scrollbar block text-left">
-                        <div id="print-preview-sheet" class="bg-white shadow-2xl p-4 sm:p-5 md:p-6 rounded text-gray-900 border border-gray-300 text-xs transition-all duration-150">
-                            <!-- Indhold udfyldes dynamisk af JS -->
+                    <div id="print-preview-viewport" class="flex-1 bg-gray-200/90 p-2 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-auto max-h-[550px] min-h-[460px] shadow-inner custom-scrollbar flex justify-center items-start">
+                        <div id="print-preview-container" class="relative transition-all duration-150 flex justify-center items-start">
+                            <div id="print-preview-sheet" class="bg-white shadow-2xl rounded text-gray-900 border border-gray-300 text-xs box-border">
+                                <!-- Indhold udfyldes dynamisk af JS -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -522,9 +556,10 @@
 
             <!-- Modal Footer -->
             <div class="px-5 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between flex-wrap gap-2 shrink-0">
-                <div class="text-xs text-gray-500 flex items-center gap-1.5">
+                <div class="text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center gap-1.5">
                     <span class="text-emerald-600 font-bold">✓ 100% brudsikker:</span>
-                    <span>Bjælker overskæres aldrig af sideskift.</span>
+                    <span>Bjælker overskæres aldrig.</span>
+                    <span class="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-medium">💡 Tip: Sørg for at 'Skaler' står på 100% / Standard i printerdialogen</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <button id="cancel-print-btn" type="button" class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-100 transition shadow-sm">Annuller</button>
@@ -625,6 +660,15 @@
         const previewPageIndicator = document.getElementById('preview-page-indicator');
         const previewViewModeBtn = document.getElementById('preview-view-mode-btn');
         const previewZoomFitBtn = document.getElementById('preview-zoom-fit-btn');
+        const printPreviewContainer = document.getElementById('print-preview-container');
+
+        // Favorit & Hurtigvalg knapper
+        const applyFavoriteBtn = document.getElementById('apply-favorite-btn');
+        const saveFavoriteBtn = document.getElementById('save-favorite-btn');
+        const favoriteSavedBadge = document.getElementById('favorite-saved-badge');
+        const presetWorkshopBtn = document.getElementById('preset-workshop-btn');
+        const presetFullBtn = document.getElementById('preset-full-btn');
+        const presetPlanOnlyBtn = document.getElementById('preset-plan-only-btn');
 
         let currentPreviewPageIndex = 0;
         let previewViewMode = 'single'; // 'single' eller 'all'
@@ -682,6 +726,18 @@
                 renderCurrentPreviewSheet();
             });
         }
+
+        if (saveFavoriteBtn) saveFavoriteBtn.addEventListener('click', savePrintFavorite);
+        if (applyFavoriteBtn) applyFavoriteBtn.addEventListener('click', applyPrintFavorite);
+        if (presetWorkshopBtn) presetWorkshopBtn.addEventListener('click', () => applyPreset('workshop'));
+        if (presetFullBtn) presetFullBtn.addEventListener('click', () => applyPreset('full'));
+        if (presetPlanOnlyBtn) presetPlanOnlyBtn.addEventListener('click', () => applyPreset('plan-only'));
+
+        window.addEventListener('resize', () => {
+            if (printModal && !printModal.classList.contains('hidden')) {
+                renderCurrentPreviewSheet();
+            }
+        });
 
         // Luk ved klik på mørk baggrund
         if (printModal) {
@@ -1629,16 +1685,154 @@
             }
         }
 
-        // --- PRINT LAYOUT MODAL & GENERERING ---
+        // --- PRINT LAYOUT MODAL, FAVORITTER & GENERERING ---
+        function savePrintFavorite() {
+            try {
+                const favoriteSettings = {
+                    orientation: printOptOrientation ? printOptOrientation.value : 'portrait',
+                    size: printOptSize ? printOptSize.value : 'A4',
+                    displayMode: printOptDisplayMode ? printOptDisplayMode.value : 'both',
+                    scale: printOptScale ? parseInt(printOptScale.value) || 100 : 100,
+                    incHeader: printIncHeader ? printIncHeader.checked : false,
+                    incSummary: printIncSummary ? printIncSummary.checked : false,
+                    incPlan: printIncPlan ? printIncPlan.checked : true,
+                    incParts: printIncParts ? printIncParts.checked : true,
+                    incShopping: printIncShopping ? printIncShopping.checked : false,
+                    notes: printNotesInput ? printNotesInput.value : ''
+                };
+                localStorage.setItem('traeOptApp_printFavorite', JSON.stringify(favoriteSettings));
+                if (favoriteSavedBadge) {
+                    favoriteSavedBadge.classList.remove('hidden');
+                    favoriteSavedBadge.innerText = '✓ Favorit gemt!';
+                    setTimeout(() => favoriteSavedBadge.classList.add('hidden'), 2500);
+                }
+            } catch (e) {
+                console.warn('Fejl ved gemning af favorit:', e);
+            }
+        }
+
+        function applyPrintFavorite() {
+            try {
+                const raw = localStorage.getItem('traeOptApp_printFavorite');
+                if (!raw) {
+                    alert('Du har ikke gemt en favorit endnu.\n\nVælg dine ønskede indstillinger i menuen og tryk på "Gem som favorit", så husker appen dine valg fremover.');
+                    return;
+                }
+                const fav = JSON.parse(raw);
+                applyPrintSettings(fav);
+                if (favoriteSavedBadge) {
+                    favoriteSavedBadge.classList.remove('hidden');
+                    favoriteSavedBadge.innerText = '✓ Favorit indlæst!';
+                    setTimeout(() => favoriteSavedBadge.classList.add('hidden'), 2000);
+                }
+            } catch (e) {
+                console.warn('Fejl ved indlæsning af favorit:', e);
+            }
+        }
+
+        function applyPreset(type) {
+            if (type === 'workshop') {
+                applyPrintSettings({
+                    orientation: 'portrait',
+                    size: 'A4',
+                    displayMode: 'both',
+                    scale: 60,
+                    incHeader: false,
+                    incSummary: false,
+                    incPlan: true,
+                    incParts: true,
+                    incShopping: false
+                });
+            } else if (type === 'full') {
+                applyPrintSettings({
+                    orientation: 'portrait',
+                    size: 'A4',
+                    displayMode: 'gross',
+                    scale: 100,
+                    incHeader: true,
+                    incSummary: true,
+                    incPlan: true,
+                    incParts: true,
+                    incShopping: true
+                });
+            } else if (type === 'plan-only') {
+                applyPrintSettings({
+                    orientation: 'portrait',
+                    size: 'A4',
+                    displayMode: 'both',
+                    scale: 85,
+                    incHeader: true,
+                    incSummary: true,
+                    incPlan: true,
+                    incParts: false,
+                    incShopping: false
+                });
+            }
+        }
+
+        function applyPrintSettings(settings) {
+            if (!settings) return;
+            if (settings.orientation && printOptOrientation) printOptOrientation.value = settings.orientation;
+            if (settings.size && printOptSize) printOptSize.value = settings.size;
+            if (settings.displayMode && printOptDisplayMode) printOptDisplayMode.value = settings.displayMode;
+            if (settings.scale && printOptScale) printOptScale.value = settings.scale;
+            if (settings.incHeader !== undefined && printIncHeader) printIncHeader.checked = settings.incHeader;
+            if (settings.incSummary !== undefined && printIncSummary) printIncSummary.checked = settings.incSummary;
+            if (settings.incPlan !== undefined && printIncPlan) printIncPlan.checked = settings.incPlan;
+            if (settings.incParts !== undefined && printIncParts) printIncParts.checked = settings.incParts;
+            if (settings.incShopping !== undefined && printIncShopping) printIncShopping.checked = settings.incShopping;
+            if (settings.notes !== undefined && printNotesInput) printNotesInput.value = settings.notes;
+            updatePrintPreview();
+        }
+
+        function saveLastPrintSettings() {
+            try {
+                const current = {
+                    orientation: printOptOrientation ? printOptOrientation.value : 'portrait',
+                    size: printOptSize ? printOptSize.value : 'A4',
+                    displayMode: printOptDisplayMode ? printOptDisplayMode.value : 'both',
+                    scale: printOptScale ? parseInt(printOptScale.value) || 100 : 100,
+                    incHeader: printIncHeader ? printIncHeader.checked : false,
+                    incSummary: printIncSummary ? printIncSummary.checked : false,
+                    incPlan: printIncPlan ? printIncPlan.checked : true,
+                    incParts: printIncParts ? printIncParts.checked : true,
+                    incShopping: printIncShopping ? printIncShopping.checked : false,
+                    notes: printNotesInput ? printNotesInput.value : ''
+                };
+                localStorage.setItem('traeOptApp_lastPrintSettings', JSON.stringify(current));
+            } catch(e) {}
+        }
+
         function openPrintModal(e) {
             if (!latestOptimizationResult || requiredPieces.length === 0) {
                 alert('Tilføj mindst ét emne i sektion 2 for at generere en skæreplan før udskrift.');
                 return;
             }
             currentPreviewPageIndex = 0; // Nulstil altid til side 1 ved åbning
-            if (printOptDisplayMode) {
-                printOptDisplayMode.value = cutDisplayMode || 'gross';
-            }
+
+            // Genindlæs automatisk enten seneste valg eller gemt favorit
+            try {
+                const saved = localStorage.getItem('traeOptApp_lastPrintSettings') || localStorage.getItem('traeOptApp_printFavorite');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && typeof parsed === 'object') {
+                        if (parsed.orientation && printOptOrientation) printOptOrientation.value = parsed.orientation;
+                        if (parsed.size && printOptSize) printOptSize.value = parsed.size;
+                        if (parsed.displayMode && printOptDisplayMode) printOptDisplayMode.value = parsed.displayMode;
+                        else if (printOptDisplayMode) printOptDisplayMode.value = cutDisplayMode || 'gross';
+                        if (parsed.scale && printOptScale) printOptScale.value = parsed.scale;
+                        if (parsed.incHeader !== undefined && printIncHeader) printIncHeader.checked = parsed.incHeader;
+                        if (parsed.incSummary !== undefined && printIncSummary) printIncSummary.checked = parsed.incSummary;
+                        if (parsed.incPlan !== undefined && printIncPlan) printIncPlan.checked = parsed.incPlan;
+                        if (parsed.incParts !== undefined && printIncParts) printIncParts.checked = parsed.incParts;
+                        if (parsed.incShopping !== undefined && printIncShopping) printIncShopping.checked = parsed.incShopping;
+                        if (parsed.notes !== undefined && printNotesInput) printNotesInput.value = parsed.notes;
+                    }
+                } else if (printOptDisplayMode) {
+                    printOptDisplayMode.value = cutDisplayMode || 'gross';
+                }
+            } catch (err) {}
+
             if (printModal) {
                 printModal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
@@ -1646,7 +1840,6 @@
                 // Intelligent synlighed i iframes & ved scroll
                 const modalBox = document.getElementById('print-modal-box');
                 if (modalBox) {
-                    // Hvis vi befinder os i en auto-resized Moodle iframe med stor højde (hvor parent scroller)
                     if (window.self !== window.top && window.innerHeight > 1200) {
                         const triggerBtn = document.getElementById('print-btn-desktop');
                         const triggerY = triggerBtn ? triggerBtn.offsetTop : 100;
@@ -1700,11 +1893,11 @@
         function paginatePrintContent(res, options = {}) {
             if (!res || !res.plan) return ['<p style="color:#6b7280; font-style:italic;">Ingen optimeringsresultater tilgængelige.</p>'];
             const {
-                incHeader = true,
-                incSummary = true,
+                incHeader = false,
+                incSummary = false,
                 incPlan = true,
                 incParts = true,
-                incShopping = true,
+                incShopping = false,
                 notes = '',
                 projectName = 'Træoptimerings-Projekt',
                 scale = 100,
@@ -2100,11 +2293,21 @@
                 previewNextPageBtn.style.opacity = previewNextPageBtn.disabled ? '0.35' : '1';
             }
 
+            // Måldimensioner for et realistisk papirark
+            const targetW = isLandscape ? (isA3 ? 980 : 820) : (isA3 ? 720 : 620);
+            const targetH = isLandscape ? Math.round(targetW * 210 / 297) : Math.round(targetW * 297 / 210);
+
             if (previewViewMode === 'all') {
                 // Rul alle sider sekventielt
+                if (printPreviewContainer) {
+                    printPreviewContainer.style.width = '100%';
+                    printPreviewContainer.style.height = 'auto';
+                    printPreviewContainer.style.overflow = 'visible';
+                }
+
                 const multiHTML = lastGeneratedPages.map((pageHtml, idx) => {
                     return `
-                        <div class="preview-page-card" style="background: white; border: 1.5px solid #94a3b8; border-radius: 4px; box-shadow: 0 8px 20px -3px rgba(0,0,0,0.18); padding: ${isLandscape ? '18px 22px' : '22px 18px'}; margin-bottom: 20px; box-sizing: border-box; width: 100%; max-width: ${isLandscape ? '740px' : '520px'}; margin-left: auto; margin-right: auto; min-height: ${isLandscape ? '420px' : '580px'}; display: flex; flex-direction: column;">
+                        <div class="preview-page-card" style="background: white; border: 1.5px solid #94a3b8; border-radius: 4px; box-shadow: 0 8px 20px -3px rgba(0,0,0,0.18); padding: ${isLandscape ? '20px 26px' : '24px 26px'}; margin-bottom: 24px; box-sizing: border-box; width: 100%; max-width: ${targetW}px; margin-left: auto; margin-right: auto; min-height: ${targetH}px; display: flex; flex-direction: column; justify-content: space-between;">
                             ${pageHtml}
                         </div>
                     `;
@@ -2116,46 +2319,45 @@
                 printPreviewSheet.style.border = 'none';
                 printPreviewSheet.style.padding = '0';
                 printPreviewSheet.style.height = 'auto';
-                printPreviewSheet.style.maxHeight = 'none';
                 printPreviewSheet.style.width = '100%';
-                printPreviewSheet.style.maxWidth = '100%';
-                printPreviewSheet.style.aspectRatio = 'auto';
-                printPreviewSheet.style.overflow = 'visible';
+                printPreviewSheet.style.transform = 'none';
             } else {
-                // Enkelt side visning
+                // Enkelt side visning med proportional skalering så INTET klippes
                 printPreviewSheet.innerHTML = lastGeneratedPages[currentPreviewPageIndex];
                 printPreviewSheet.style.background = '#ffffff';
                 printPreviewSheet.style.border = '1.5px solid #94a3b8';
                 printPreviewSheet.style.boxShadow = '0 12px 28px -4px rgba(0,0,0,0.18)';
                 printPreviewSheet.style.borderRadius = '4px';
-                printPreviewSheet.style.margin = '0 auto';
                 printPreviewSheet.style.boxSizing = 'border-box';
+                printPreviewSheet.style.padding = isLandscape ? '20px 26px' : '24px 26px';
 
                 if (previewFitToWindow) {
-                    // Tilpas hele siden til vinduets højde uden at scrolle
-                    if (isLandscape) {
-                        printPreviewSheet.style.height = '460px';
-                        printPreviewSheet.style.width = '650px';
-                        printPreviewSheet.style.maxWidth = '100%';
-                        printPreviewSheet.style.aspectRatio = '297 / 210';
-                        printPreviewSheet.style.padding = '16px 20px';
-                        printPreviewSheet.style.overflow = 'hidden';
-                    } else {
-                        printPreviewSheet.style.height = '480px';
-                        printPreviewSheet.style.width = '340px';
-                        printPreviewSheet.style.maxWidth = '100%';
-                        printPreviewSheet.style.aspectRatio = '210 / 297';
-                        printPreviewSheet.style.padding = '18px 14px';
-                        printPreviewSheet.style.overflow = 'hidden';
+                    const vp = document.getElementById('print-preview-viewport');
+                    const availH = Math.max(380, (vp ? vp.clientHeight : 480) - 24);
+                    const availW = Math.max(300, (vp ? vp.clientWidth : 520) - 24);
+                    const scaleFactor = Math.min(availW / targetW, availH / targetH, 1.0);
+
+                    if (printPreviewContainer) {
+                        printPreviewContainer.style.width = Math.round(targetW * scaleFactor) + 'px';
+                        printPreviewContainer.style.height = Math.round(targetH * scaleFactor) + 'px';
+                        printPreviewContainer.style.overflow = 'hidden';
                     }
+                    printPreviewSheet.style.width = targetW + 'px';
+                    printPreviewSheet.style.height = targetH + 'px';
+                    printPreviewSheet.style.transform = `scale(${scaleFactor})`;
+                    printPreviewSheet.style.transformOrigin = 'top left';
+                    printPreviewSheet.style.overflow = 'hidden';
                 } else {
-                    // Fuld bredde med fri højde
+                    if (printPreviewContainer) {
+                        printPreviewContainer.style.width = '100%';
+                        printPreviewContainer.style.height = 'auto';
+                        printPreviewContainer.style.overflow = 'visible';
+                    }
+                    printPreviewSheet.style.width = targetW + 'px';
+                    printPreviewSheet.style.maxWidth = '100%';
                     printPreviewSheet.style.height = 'auto';
-                    printPreviewSheet.style.maxHeight = 'none';
-                    printPreviewSheet.style.width = '100%';
-                    printPreviewSheet.style.maxWidth = isLandscape ? (isA3 ? '860px' : '740px') : (isA3 ? '600px' : '500px');
-                    printPreviewSheet.style.aspectRatio = isLandscape ? '297 / 210' : '210 / 297';
-                    printPreviewSheet.style.padding = isLandscape ? '20px 24px' : '24px 20px';
+                    printPreviewSheet.style.minHeight = targetH + 'px';
+                    printPreviewSheet.style.transform = 'none';
                     printPreviewSheet.style.overflow = 'visible';
                 }
             }
@@ -2217,6 +2419,7 @@
                 }
 
                 renderCurrentPreviewSheet();
+                saveLastPrintSettings(); // Gem altid automatisk seneste valg
             } catch (err) {
                 console.error('Fejl under opdatering af print-forhåndsvisning:', err);
                 if (printPreviewSheet) {
@@ -2236,11 +2439,11 @@
             const size = printOptSize ? printOptSize.value : 'A4';
             const scale = printOptScale ? parseInt(printOptScale.value) || 100 : 100;
             const displayMode = (printOptDisplayMode && printOptDisplayMode.value) || cutDisplayMode || 'gross';
-            const incHeader = printIncHeader ? printIncHeader.checked : true;
-            const incSummary = printIncSummary ? printIncSummary.checked : true;
+            const incHeader = printIncHeader ? printIncHeader.checked : false;
+            const incSummary = printIncSummary ? printIncSummary.checked : false;
             const incPlan = printIncPlan ? printIncPlan.checked : true;
             const incParts = printIncParts ? printIncParts.checked : true;
-            const incShopping = printIncShopping ? printIncShopping.checked : true;
+            const incShopping = printIncShopping ? printIncShopping.checked : false;
             const notes = printNotesInput ? printNotesInput.value.trim() : '';
             const projectName = (printProjectNameInput && printProjectNameInput.value.trim()) || 
                                 (projectNameInput && projectNameInput.value.trim()) || 
@@ -2267,7 +2470,12 @@
                 @media print {
                     @page {
                         size: ${size} ${orientation};
-                        margin: 8mm;
+                        margin: 6mm;
+                    }
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                        color-adjust: exact !important;
                     }
                     html, body {
                         background: white !important;
@@ -2293,7 +2501,7 @@
                         display: flex !important;
                         flex-direction: column !important;
                         justify-content: space-between !important;
-                        min-height: 98vh !important;
+                        min-height: 96vh !important;
                     }
                     .print-page:last-child {
                         page-break-after: auto !important;
