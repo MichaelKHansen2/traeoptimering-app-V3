@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Træoptimerings-App v3.9.6</title>
+    <title>Træoptimerings-App v3.9.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,7 +163,7 @@
 
     <div class="max-w-7xl mx-auto print-container">
         <header class="text-center mb-6 print-hide">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.6</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Træoptimerings-App v3.9.7</h1>
             <p class="text-gray-600 mt-1 text-sm md:text-base">Mængdeberegning, Deling, Udskrift & Bæredygtighedsanalyse</p>
             <div class="flex items-center justify-center gap-3 mt-2 flex-wrap">
                 <span id="version-info" class="text-xs text-gray-400"></span>
@@ -175,7 +175,7 @@
                 <span class="text-gray-300">&bull;</span>
                 <button id="force-reload-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition shadow-sm" title="Tvinger browseren til at hente den nyeste version og rydde eventuel gammel browser-cache">
                     <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Opdater app (v3.9.6)</span>
+                    <span>Opdater app (v3.9.7)</span>
                 </button>
             </div>
         </header>
@@ -367,7 +367,7 @@
 
     <!-- PRINT & PDF OPSÆTNINGS MODAL -->
     <div id="print-modal" class="fixed inset-0 z-[99999] overflow-y-auto bg-black/65 backdrop-blur-sm hidden p-2 sm:p-4 md:p-6 print-hide flex justify-center items-start" style="-webkit-overflow-scrolling: touch;">
-        <div id="print-modal-box" class="relative bg-white rounded-xl shadow-2xl max-w-5xl w-full my-2 md:my-5 flex flex-col overflow-hidden border border-gray-200 max-h-[94vh] transition-all duration-150">
+        <div id="print-modal-box" class="relative bg-white rounded-xl shadow-2xl max-w-6xl w-full my-2 md:my-5 flex flex-col overflow-hidden border border-gray-200 max-h-[94vh] transition-all duration-150">
             <!-- Modal Header -->
             <div class="px-5 py-3.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between shrink-0">
                 <div class="flex items-center gap-2.5">
@@ -407,8 +407,8 @@
                             <div>
                                 <label for="print-opt-size" class="block font-medium text-gray-600 mb-1">Størrelse</label>
                                 <select id="print-opt-size" class="w-full p-2 rounded border border-gray-300 bg-white font-medium focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="A4" selected>A4 (Standard)</option>
-                                    <option value="A3">A3 (Stort format)</option>
+                                    <option value="A4" selected>A4 (210 × 297 mm)</option>
+                                    <option value="A3">A3 (297 × 420 mm)</option>
                                 </select>
                             </div>
                         </div>
@@ -483,12 +483,17 @@
 
                 <!-- Højre side: Live Forhåndsvisning (7 kolonner på md+) -->
                 <div class="md:col-span-7 flex flex-col min-h-[350px]">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-gray-700 uppercase tracking-wider">Live Forhåndsvisning</span>
-                        <span class="text-[11px] text-gray-400">Opdateres automatisk</span>
+                    <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-gray-700 uppercase tracking-wider">Live Forhåndsvisning</span>
+                            <span id="preview-paper-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
+                                ▯ A4 Stående (Højformat)
+                            </span>
+                        </div>
+                        <span class="text-[10px] text-gray-400 font-medium">Reelt udskriftsformat</span>
                     </div>
-                    <div class="flex-1 bg-gray-200/80 p-2.5 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-y-auto max-h-[500px] flex justify-center items-start shadow-inner custom-scrollbar">
-                        <div id="print-preview-sheet" class="bg-white shadow-xl p-4 sm:p-5 md:p-7 rounded text-gray-900 border border-gray-300 text-xs w-full transition-all duration-150">
+                    <div id="print-preview-viewport" class="flex-1 bg-gray-200/90 p-2 sm:p-3 md:p-4 rounded-xl border border-gray-300 overflow-auto max-h-[520px] flex justify-center items-start shadow-inner custom-scrollbar">
+                        <div id="print-preview-sheet" class="bg-white shadow-2xl p-4 sm:p-6 md:p-7 rounded text-gray-900 border border-gray-300 text-xs transition-all duration-200">
                             <!-- Indhold udfyldes dynamisk af JS -->
                         </div>
                     </div>
@@ -680,7 +685,7 @@
         });
 
         // Opdater versionsdato automatisk
-        document.getElementById('version-info').innerHTML = "Version 3.9.6 &bull; Sidst opdateret: " + document.lastModified;
+        document.getElementById('version-info').innerHTML = "Version 3.9.7 &bull; Sidst opdateret: " + document.lastModified;
 
         // --- LIVE BEREGNINGSTRIGGER ---
         function triggerAutoCalculate() {
@@ -1614,7 +1619,9 @@
                 notes = '',
                 projectName = 'Træoptimerings-Projekt',
                 scale = 100,
-                displayMode = (cutDisplayMode || 'gross')
+                displayMode = (cutDisplayMode || 'gross'),
+                size = 'A4',
+                orientation = 'portrait'
             } = options;
 
             const barH = scale < 75 ? '34px' : (scale < 85 ? '42px' : '52px');
@@ -1633,9 +1640,14 @@
                                 <h1 style="font-size: 20px; font-weight: bold; margin: 0; color: #111827;">${projectName}</h1>
                                 ${notes ? `<p style="font-size: 11px; color: #4b5563; margin: 3px 0 0 0;"><strong>Note / Elev:</strong> ${notes}</p>` : ''}
                             </div>
-                            <div style="text-align: right; font-size: 10px; color: #6b7280;">
-                                <div>Udskrevet: ${dateStr}</div>
-                                <div>Træoptimerings-App v3.9.6</div>
+                            <div style="text-align: right; font-size: 10px; color: #4b5563;">
+                                <div><strong>Udskrevet:</strong> ${dateStr}</div>
+                                <div style="margin-top: 3px;">
+                                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 4px; font-weight: bold; font-size: 10px;">
+                                        ${orientation === 'landscape' ? '▱' : '▯'} Papir: ${size} &bull; ${orientation === 'landscape' ? 'Tværformat (Liggende)' : 'Højformat (Stående)'}
+                                    </span>
+                                </div>
+                                <div style="font-size: 9px; color: #9ca3af; margin-top: 2px;">Træoptimerings-App v3.9.7</div>
                             </div>
                         </div>
                     </div>
@@ -1851,6 +1863,13 @@
                 `;
             }
 
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e5e7eb; padding-top: 5px; margin-top: 10px; font-size: 9px; color: #6b7280;">
+                    <span>Træoptimerings-App v3.9.7 &bull; Udskriftsformat: <strong>${size} ${orientation === 'landscape' ? 'Tværformat (Liggende)' : 'Højformat (Stående)'}</strong></span>
+                    <span>Skalering: ${scale}%</span>
+                </div>
+            `;
+
             return html;
         }
 
@@ -1875,14 +1894,56 @@
                     printScaleValue.innerText = `${scale}% (${scale >= 95 ? 'Normal' : scale >= 80 ? 'Kompakt' : 'Få sider'})`;
                 }
 
+                const isLandscape = orientation === 'landscape';
+                const paperDims = isLandscape 
+                    ? (size === 'A3' ? '420 × 297 mm' : '297 × 210 mm')
+                    : (size === 'A3' ? '297 × 420 mm' : '210 × 297 mm');
+                const paperName = `${size} ${isLandscape ? 'Liggende (Tværformat)' : 'Stående (Højformat)'}`;
+
+                // Opdater badge over forhåndsvisningen
+                const previewBadge = document.getElementById('preview-paper-badge');
+                if (previewBadge) {
+                    previewBadge.innerHTML = `
+                        <span style="font-size: 13px; line-height: 1;">${isLandscape ? '▱' : '▯'}</span>
+                        <span>${paperName}</span>
+                        <span style="opacity: 0.75; font-weight: normal; font-size: 10px;">(${paperDims})</span>
+                    `;
+                    previewBadge.className = isLandscape
+                        ? 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs'
+                        : 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs';
+                }
+
                 const html = buildPrintContentHTML(latestOptimizationResult, {
-                    incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation, displayMode
+                    incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation, displayMode, size
                 });
 
                 if (printPreviewSheet) {
                     printPreviewSheet.innerHTML = html;
-                    printPreviewSheet.style.maxWidth = orientation === 'landscape' ? '100%' : '560px';
-                    printPreviewSheet.style.zoom = String((scale / 100) * 0.95);
+                    
+                    if (isLandscape) {
+                        // Papiret ligger ned (Tværformat): Bredt ark med plads til lange bjælker
+                        printPreviewSheet.style.width = '100%';
+                        printPreviewSheet.style.minWidth = '660px';
+                        printPreviewSheet.style.maxWidth = '880px';
+                        printPreviewSheet.style.aspectRatio = '297 / 210';
+                        printPreviewSheet.style.borderRadius = '6px';
+                        printPreviewSheet.style.boxShadow = '0 14px 30px -4px rgba(0,0,0,0.2), 0 4px 10px -2px rgba(0,0,0,0.1)';
+                        printPreviewSheet.style.border = '2px solid #94a3b8';
+                        printPreviewSheet.style.margin = '0 auto';
+                    } else {
+                        // Papiret står op (Højformat): Klassisk vertikalt A4/A3 ark
+                        printPreviewSheet.style.width = '100%';
+                        printPreviewSheet.style.minWidth = '0px';
+                        printPreviewSheet.style.maxWidth = '490px';
+                        printPreviewSheet.style.aspectRatio = '210 / 297';
+                        printPreviewSheet.style.borderRadius = '6px';
+                        printPreviewSheet.style.boxShadow = '0 10px 25px -4px rgba(0,0,0,0.15), 0 4px 8px -2px rgba(0,0,0,0.08)';
+                        printPreviewSheet.style.border = '1px solid #cbd5e1';
+                        printPreviewSheet.style.margin = '0 auto';
+                    }
+
+                    const zoomFactor = (scale / 100) * (isLandscape ? 0.88 : 0.95);
+                    printPreviewSheet.style.zoom = String(zoomFactor);
                 }
             } catch (err) {
                 console.error('Fejl under opdatering af print-forhåndsvisning:', err);
@@ -1914,7 +1975,7 @@
                                 'Træoptimerings-Projekt';
 
             const html = buildPrintContentHTML(latestOptimizationResult, {
-                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation, displayMode
+                incHeader, incSummary, incPlan, incParts, incShopping, notes, projectName, scale, orientation, displayMode, size
             });
 
             if (printRenderZone) {
@@ -2064,7 +2125,7 @@
             const projectName = printProjectNameInput.value.trim() || 'trae-projekt';
             const filename = `${projectName.replace(/[^a-z0-9æøå]/gi, '_').toLowerCase()}.json`;
             const projectData = {
-                version: '3.9.6',
+                version: '3.9.7',
                 availableDimensions,
                 requiredPieces,
                 stockLengths,
