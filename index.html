@@ -244,12 +244,12 @@
                     </div>
                     <form id="add-piece-form" class="grid grid-cols-1 sm:grid-cols-6 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-gray-200">
                         <div class="sm:col-span-2">
-                            <label for="piece-dimension-select" class="block text-xs font-medium text-gray-600 mb-1">Dimension</label>
-                            <select id="piece-dimension-select" name="dimension" class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"></select>
-                        </div>
-                        <div class="sm:col-span-2">
                             <label for="piece-tag" class="block text-xs font-medium text-gray-600 mb-1">Emne (navn)</label>
                             <input type="text" id="piece-tag" name="tag" class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border" placeholder="f.eks. Spær">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="piece-dimension-select" class="block text-xs font-medium text-gray-600 mb-1">Dimension</label>
+                            <select id="piece-dimension-select" name="dimension" class="block w-full rounded-md border-gray-300 shadow-sm text-sm p-2 border"></select>
                         </div>
                         <div>
                             <label for="piece-length" class="block text-xs font-medium text-gray-600 mb-1">Længde (mm)</label>
@@ -798,7 +798,8 @@
 
             renderPiecesList();
             e.target.reset();
-            document.getElementById('piece-length').focus();
+            const tagInput = document.getElementById('piece-tag');
+            if (tagInput) tagInput.focus();
             triggerAutoCalculate();
         }
 
@@ -1053,27 +1054,42 @@
             });
 
             piecesListContainer.innerHTML = Object.values(grouped).map(p => `
-                <div class="flex justify-between items-center p-2.5 bg-gray-50 hover:bg-gray-100 rounded-md border border-gray-200 text-sm transition">
-                    <div class="flex-grow flex flex-wrap items-center gap-2">
-                        <div class="font-mono text-sm flex items-center group bg-white px-2 py-0.5 rounded border border-gray-200">
+                <div class="p-2.5 bg-gray-50 hover:bg-gray-100/80 rounded-lg border border-gray-200 text-sm transition space-y-1.5 shadow-sm">
+                    <!-- Øverste linje: Emne (navn) og Fjern-knap -->
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center group flex-grow min-w-0">
+                            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-1.5 flex-shrink-0">Emne:</span>
+                            <input type="text" 
+                                   class="inline-edit text-sm font-bold text-indigo-700 hover:text-indigo-900 focus:text-indigo-900 w-full text-left bg-transparent truncate" 
+                                   value="${p.tag}" 
+                                   placeholder="f.eks. Spær" 
+                                   title="Klik for at redigere navn" 
+                                   onchange='updatePieceGroupTag(${JSON.stringify(p.ids)}, this.value)'>
+                            ${svgPencil}
+                        </div>
+                        <button onclick='${JSON.stringify(p.ids)}.forEach(id => removePiece(id))' 
+                                class="text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-0.5 rounded hover:bg-red-50 transition flex-shrink-0"
+                                title="Fjern dette emne">
+                            Fjern
+                        </button>
+                    </div>
+
+                    <!-- Nederste linje: Antal, Dimension og Længde -->
+                    <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-200/70 text-xs">
+                        <div class="font-mono text-xs flex items-center group bg-white px-2 py-0.5 rounded border border-gray-200 shadow-sm" title="Klik for at ændre antal">
                             <input type="number" min="1" class="inline-edit w-10 font-bold text-indigo-700 text-center" value="${p.amount}" onchange='updatePieceGroupAmount(${JSON.stringify(p.ids)}, this.value)'>
                             <span class="text-xs text-gray-500 ml-1">stk.</span>
                             ${svgPencil}
                         </div>
-                        <span class="text-gray-400 font-mono">|</span>
-                        <span class="font-mono font-semibold text-gray-700 bg-gray-200/70 px-2 py-0.5 rounded text-xs">${p.dimension}</span>
-                        <span class="text-gray-400 font-mono">|</span>
-                        <div class="font-mono text-sm flex items-center group bg-white px-2 py-0.5 rounded border border-gray-200">
+                        <span class="text-gray-300 font-mono">|</span>
+                        <span class="font-mono font-bold text-gray-700 bg-gray-200/80 px-2 py-0.5 rounded text-xs border border-gray-300/60">${p.dimension}</span>
+                        <span class="text-gray-300 font-mono">|</span>
+                        <div class="font-mono text-xs flex items-center group bg-white px-2 py-0.5 rounded border border-gray-200 shadow-sm" title="Klik for at ændre længde">
                             <input type="number" min="1" step="1" class="inline-edit w-16 font-bold text-gray-800 text-center" value="${p.length}" onchange='updatePieceGroupLength(${JSON.stringify(p.ids)}, this.value)'>
                             <span class="text-xs text-gray-500 ml-1">mm</span>
                             ${svgPencil}
                         </div>
-                        <div class="flex items-center group flex-grow min-w-[100px] ml-1">
-                            <input type="text" class="inline-edit text-xs text-indigo-600 font-semibold w-full text-left bg-transparent" value="${p.tag}" onchange='updatePieceGroupTag(${JSON.stringify(p.ids)}, this.value)'>
-                            ${svgPencil}
-                        </div>
                     </div>
-                    <button onclick='${JSON.stringify(p.ids)}.forEach(id => removePiece(id))' class="text-red-500 hover:text-red-700 text-xs font-semibold ml-2 px-2 py-1 rounded hover:bg-red-50 transition">Fjern</button>
                 </div>
             `).join('') || '<p class="text-xs text-gray-400 italic">Ingen emner tilføjet endnu.</p>';
         }
